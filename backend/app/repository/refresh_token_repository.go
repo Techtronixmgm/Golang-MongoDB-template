@@ -13,5 +13,6 @@ type RefreshTokenRepository interface {
 	Touch(ctx context.Context, tokenID string) error
 	Revoke(ctx context.Context, tokenID string) error
 	RevokeAllByUserID(ctx context.Context, userID string) error
-	DeleteExpired(ctx context.Context, before time.Time) error
+
+	DeleteRevokedBefore(ctx context.Context, before time.Time) error
 }

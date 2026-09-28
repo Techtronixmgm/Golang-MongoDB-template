@@ -3,6 +3,7 @@ package main
 import (
 	"basic-app/config"
 	"basic-app/database"
+	"basic-app/repository"
 	mongorepo "basic-app/repository/mongo"
 	"basic-app/router"
 	"context"
@@ -49,6 +50,22 @@ func main() {
 		return
 	}
 
+	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(db)
+
+	cleanupCtx, cleanupCancel := context.WithCancel(context.Background())
+	defer cleanupCancel()
+
+	// log.Printf(
+	// 	"Refresh token cleanup retention: %d days",
+	// 	cfg.RefreshTokenRevokedRetentionDays,
+	// )
+
+	go startRefreshTokenCleanup(
+		cleanupCtx,
+		refreshTokenRepository,
+		cfg.RefreshTokenRevokedRetentionDays,
+	)
+
 	gin.SetMode(cfg.GinMode)
 
 	// middleware.StartCleanup()
@@ -93,4 +110,42 @@ func main() {
 	}
 
 	log.Println("Server stopped")
+}
+
+func startRefreshTokenCleanup(
+	ctx context.Context,
+	repo repository.RefreshTokenRepository,
+	retentionDays int,
+) {
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+
+	cleanup := func() {
+		before := time.Now().UTC().AddDate(0, 0, -retentionDays)
+
+		cleanupCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+
+		if err := repo.DeleteRevokedBefore(cleanupCtx, before); err != nil {
+			log.Printf("Refresh token cleanup failed: %v", err)
+			return
+		}
+
+		// log.Printf(
+		// 	"Refresh token cleanup completed; removed revoked tokens older than %d days",
+		// 	retentionDays,
+		// )
+	}
+
+	// Run once when the application starts.
+	cleanup()
+
+	for {
+		select {
+		case <-ticker.C:
+			cleanup()
+		case <-ctx.Done():
+			return
+		}
+	}
 }

@@ -21,8 +21,9 @@ type Config struct {
 	AuthAccessCookie  string
 	AuthRefreshCookie string
 
-	CookieSecure bool
-	GinMode      string
+	CookieSecure                     bool
+	GinMode                          string
+	RefreshTokenRevokedRetentionDays int
 }
 
 func Load() (Config, error) {
@@ -120,17 +121,38 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
+	// Refresh token revoked retention.
+	// Defaults to 7 days when the environment variable is not set.
+	refreshTokenRevokedRetentionDays := 7
+
+	retentionDaysStr := strings.TrimSpace(
+		os.Getenv("REFRESH_TOKEN_REVOKED_RETENTION_DAYS"),
+	)
+
+	if retentionDaysStr != "" {
+		refreshTokenRevokedRetentionDays, err = strconv.Atoi(
+			retentionDaysStr,
+		)
+		if err != nil {
+			return Config{}, fmt.Errorf(
+				"invalid REFRESH_TOKEN_REVOKED_RETENTION_DAYS: %w",
+				err,
+			)
+		}
+	}
+
 	config := Config{
-		MongoUri:               mongoURI,
-		MongoDB:                mongoDB,
-		ServerPort:             port,
-		JWTSecret:              jwtSecret,
-		JWTExpiryHours:         jwtExpiryHours,
-		AuthAccessCookie:       authAccessCookie,
-		AuthRefreshCookie:      authRefreshCookie,
-		RefreshTokenExpiryDays: refreshTokenExpiryDays,
-		CookieSecure:           cookieSecure,
-		GinMode:                ginMode,
+		MongoUri:                         mongoURI,
+		MongoDB:                          mongoDB,
+		ServerPort:                       port,
+		JWTSecret:                        jwtSecret,
+		JWTExpiryHours:                   jwtExpiryHours,
+		AuthAccessCookie:                 authAccessCookie,
+		AuthRefreshCookie:                authRefreshCookie,
+		RefreshTokenExpiryDays:           refreshTokenExpiryDays,
+		CookieSecure:                     cookieSecure,
+		GinMode:                          ginMode,
+		RefreshTokenRevokedRetentionDays: refreshTokenRevokedRetentionDays,
 	}
 
 	if err := config.Validate(); err != nil {
@@ -170,6 +192,12 @@ func (c Config) Validate() error {
 		)
 	}
 
+	if c.RefreshTokenRevokedRetentionDays <= 0 {
+		return errors.New(
+			"refresh token revoked retention days must be greater than zero",
+		)
+	}
+
 	if c.AuthAccessCookie == "" {
 		return errors.New(
 			"access token cookie name is missing",
@@ -185,6 +213,7 @@ func (c Config) Validate() error {
 	if c.GinMode == "" {
 		return errors.New("Gin mode is missing")
 	}
+
 	return nil
 }
 

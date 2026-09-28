@@ -161,14 +161,15 @@ func (r *RefreshTokenRepository) RevokeAllByUserID(
 	return err
 }
 
-func (r *RefreshTokenRepository) DeleteExpired(
+func (r *RefreshTokenRepository) DeleteRevokedBefore(
 	ctx context.Context,
 	before time.Time,
 ) error {
 	_, err := r.collection.DeleteMany(
 		ctx,
 		bson.M{
-			"expires_at": bson.M{
+			"revoked_at": bson.M{
+				"$ne": nil,
 				"$lt": before,
 			},
 		},
