@@ -25,7 +25,8 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
 	settingsService := services.NewSettingsService(settingsRepository)
-	authService := services.NewAuthService(userRepository, settingsService, cfg)
+	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(database)
+	authService := services.NewAuthService(userRepository, refreshTokenRepository, settingsService, cfg)
 	settingsCtx, cancel := context.WithTimeout(
 		context.Background(),
 		10*time.Second,

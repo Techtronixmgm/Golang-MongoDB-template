@@ -27,8 +27,7 @@ type User struct {
 	ProfilePic string   `bson:"profile_pic" json:"profilePic"`
 	Status     bool     `bson:"status" json:"status"`
 
-	PasswordHash     string `bson:"password_hash" json:"-"`
-	RefreshTokenHash string `bson:"refresh_token_hash" json:"-"`
+	PasswordHash string `bson:"password_hash" json:"-"`
 
 	CreatedAt   time.Time  `bson:"created_at" json:"createdAt"`
 	UpdatedAt   time.Time  `bson:"updated_at" json:"updatedAt"`

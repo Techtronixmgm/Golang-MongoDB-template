@@ -44,6 +44,11 @@ func main() {
 		return
 	}
 
+	if err := mongorepo.EnsureRefreshTokenIndexes(indexCtx, db); err != nil {
+		log.Printf("Failed to create refresh token indexes: %v", err)
+		return
+	}
+
 	gin.SetMode(cfg.GinMode)
 
 	// middleware.StartCleanup()

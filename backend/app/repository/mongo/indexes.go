@@ -64,3 +64,43 @@ func EnsureUserIndexes(
 
 	return err
 }
+
+func EnsureRefreshTokenIndexes(
+	ctx context.Context,
+	db *mongodriver.Database,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	collection := db.Collection("refresh_tokens")
+
+	indexes := []mongodriver.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "token_hash", Value: 1},
+			},
+			Options: options.Index().
+				SetUnique(true).
+				SetName("unique_token_hash"),
+		},
+		{
+			Keys: bson.D{
+				{Key: "user_id", Value: 1},
+			},
+			Options: options.Index().
+				SetName("refresh_token_user_id"),
+		},
+		{
+			Keys: bson.D{
+				{Key: "expires_at", Value: 1},
+			},
+			Options: options.Index().
+				SetExpireAfterSeconds(0).
+				SetName("refresh_token_expiry"),
+		},
+	}
+
+	_, err := collection.Indexes().CreateMany(ctx, indexes)
+
+	return err
+}

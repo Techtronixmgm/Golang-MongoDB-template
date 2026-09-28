@@ -21,4 +21,6 @@ var (
 	ErrUserNotFound                = errors.New("user not found")
 	ErrRegistrationDisabled        = errors.New("user registration is currently disabled by the adminisistrator")
 	ErrApplicationSettingsNotFound = errors.New("application settings not found")
+
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 )
