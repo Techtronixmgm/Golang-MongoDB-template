@@ -50,6 +50,9 @@ func main() {
 		return
 	}
 
+	if err := mongorepo.EnsurePageIndexes(indexCtx, db); err != nil {
+		log.Fatal("failed to ensure page indexes:", err)
+	}
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(db)
 
 	cleanupCtx, cleanupCancel := context.WithCancel(context.Background())

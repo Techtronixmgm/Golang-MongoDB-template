@@ -61,9 +61,23 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 		cfg.JWTExpiryHours,
 		refreshToken,
 	)
+
+	optionalAuthMiddleware := auth.OptionalAuthMiddleware(
+		cfg.JWTSecret,
+		cfg.AuthAccessCookie,
+		cfg.AuthRefreshCookie,
+		cfg.CookieSecure,
+		cfg.JWTExpiryHours,
+		refreshToken,
+	)
+
 	userService := services.NewUserService(userRepository)
 	authHandler := handler.NewAuthHandler(authService, cfg)
 	userHandler := handler.NewUserHandler(userService)
+	pageRepository := mongorepo.NewPageRepository(database)
+	pageService := services.NewPageService(pageRepository)
+	pageHandler := handler.NewPageHandler(pageService)
+
 	settingsHandler := handler.NewSettingsHandler(settingsService)
 	// Global/Public Endpoints
 	r.GET("/health", func(c *gin.Context) {
@@ -133,5 +147,19 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	protectedSettings := r.Group("/api/v1/admin/settings")
 	protectedSettings.Use(authMiddleware, auth.RequireRoles("admin"))
 	protectedSettings.PATCH("", settingsHandler.Update)
+
+	api := r.Group("/api/v1")
+	// Public / registered pages
+	api.GET("/pages/:slug", optionalAuthMiddleware, pageHandler.GetBySlug)
+
+	// Admin pages
+	admin := api.Group("/admin")
+	admin.Use(authMiddleware, auth.RequireRoles("admin"))
+
+	admin.POST("/pages", pageHandler.Create)
+	admin.GET("/pages", pageHandler.List)
+	admin.PATCH("/pages/:id", pageHandler.Update)
+	admin.DELETE("/pages/:id", pageHandler.Delete)
+
 	return r
 }

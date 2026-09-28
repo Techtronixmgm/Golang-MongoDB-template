@@ -104,3 +104,44 @@ func EnsureRefreshTokenIndexes(
 
 	return err
 }
+
+func EnsurePageIndexes(
+	ctx context.Context,
+	db *mongodriver.Database,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	collection := db.Collection("pages")
+
+	indexes := []mongodriver.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "slug", Value: 1},
+			},
+			Options: options.Index().
+				SetUnique(true).
+				SetName("unique_page_slug"),
+		},
+		{
+			Keys: bson.D{
+				{Key: "visibility", Value: 1},
+				{Key: "created_at", Value: -1},
+			},
+			Options: options.Index().
+				SetName("page_visibility_created_at"),
+		},
+		// {
+		// 	Keys: bson.D{
+		// 		{Key: "author_id", Value: 1},
+		// 		{Key: "created_at", Value: -1},
+		// 	},
+		// 	Options: options.Index().
+		// 		SetName("page_author_created_at"),
+		// },
+	}
+
+	_, err := collection.Indexes().CreateMany(ctx, indexes)
+
+	return err
+}

@@ -14,13 +14,24 @@ var (
 	ErrInvalidCredentials    = errors.New("invalid credentials")
 	ErrInvalidRefreshToken   = errors.New("invalid refresh token")
 	ErrNoFieldsToUpdate      = errors.New("no fields to update")
-	ErrInvalidPage           = errors.New("page must be greater than zero")
-	ErrInvalidLimit          = errors.New("limit must be between 1 and 100")
-	ErrCannotChangeOwnStatus = errors.New("admin cannot change their own account status")
 
+	//Pagination
+	ErrInvalidPage  = errors.New("page must be greater than zero")
+	ErrInvalidLimit = errors.New("limit must be between 1 and 100")
+
+	// User
+	ErrCannotChangeOwnStatus       = errors.New("admin cannot change their own account status")
 	ErrUserNotFound                = errors.New("user not found")
 	ErrRegistrationDisabled        = errors.New("user registration is currently disabled by the adminisistrator")
 	ErrApplicationSettingsNotFound = errors.New("application settings not found")
 
+	// RefreshToken
 	ErrRefreshTokenNotFound = errors.New("refresh token not found")
+
+	// Pages
+	ErrPageNotFound       = errors.New("page not found")
+	ErrInvalidPageContent = errors.New("invalid page")
+	ErrInvalidVisibility  = errors.New("invalid page visibility")
+	ErrInvalidSlug        = errors.New("invalid slug")
+	ErrSlugAlreadyExists  = errors.New("slug already exists")
 )

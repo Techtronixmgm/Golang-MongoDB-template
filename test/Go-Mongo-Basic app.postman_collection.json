@@ -270,21 +270,433 @@
       "name": "Admin",
       "item": [
         {
-          "name": "Create customer",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Ramesh\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"ramesh\",\n  \"email\": \"ramesh@example.com\",\n  \"altEmail\": \"ramesh.alt@example.com\",\n  \"phone\": \"6952365445\",\n  \"password\": \"Password@123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+          "name": "Customer management",
+          "item": [
+            {
+              "name": "Create customer",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Ramesh\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"ramesh\",\n  \"email\": \"ramesh@example.com\",\n  \"altEmail\": \"ramesh.alt@example.com\",\n  \"phone\": \"6952365445\",\n  \"password\": \"Password@123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/customers",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "customers"
+                  ]
                 }
-              }
+              },
+              "response": []
             },
+            {
+              "name": "Update customer",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"dateOfBirth\": \"15-12-1990\",\n//   \"addressLine1\": \"12 MG Road\",\n//   \"addressLine2\": \"Near Metro Station\",\n//   \"city\": \"Bengaluru\",\n//   \"state\": \"Karnataka\",\n//   \"pinCode\": \"560001\"\n// }\n\n{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"rahulsharma\",\n  \"email\": \"rahul@example.com\",\n  \"altEmail\": \"rahul.personal@example.com\",\n  \"phone\": \"9876543210\",\n  \"dateOfBirth\": \"15-12-1990\",\n  \"addressLine1\": \"12 MG Road\",\n  \"addressLine2\": \"Near Metro Station\",\n  \"city\": \"Bengaluru\",\n  \"state\": \"Karnataka\",\n  \"pinCode\": \"560001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/customers/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "customers",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Search customers",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"rahulsharma\",\n  \"email\": \"rahul@example.com\",\n  \"phone\": \"6952365414\",\n  \"password\": \"Password@123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/customers?search=6545859575",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "customers"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "6545859575"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change customer status",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/customers/6aacc9f29bc6df245254ccbc/status",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "customers",
+                    "6aacc9f29bc6df245254ccbc",
+                    "status"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change customer password",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"new_password\": \"sadsad\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/customers/6aacc9f29bc6df245254ccbc/password",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "customers",
+                    "6aacc9f29bc6df245254ccbc",
+                    "password"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get customers by ID",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"rahulsharma\",\n  \"email\": \"rahul@example.com\",\n  \"phone\": \"6952365414\",\n  \"password\": \"Password@123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/customers/6aae0a4123727bd8c5e1f85e",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "customers",
+                    "6aae0a4123727bd8c5e1f85e"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Settings",
+          "item": [
+            {
+              "name": "public user registration on/off",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"registration_enabled\" : true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/settings",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "settings"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Pages",
+          "item": [
+            {
+              "name": "Create page",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "// {\n//   \"title\": \"About Us\",\n//   \"content\": \"About Us page\",\n//   \"visibility\" : \"public\"/\"registered\"\n// }\n\n{\n  \"title\": \"Website Development Porfolio\",\n  \"content\": \"With extensive experience in providing effective web and mobility solutions, we help our clients scale-up their business and generate high revenue. Our expert professionals work diligently to customize business solutions for your specific industry niche by conducting thorough market research and competitor analysis.\",\n  \"visibility\" : \"public\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/pages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "pages"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Pages",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"identifier\": \"johnf\",\n  \"password\": \"Password@123\"\n}\n\n// GET /api/v1/admin/pages\n// GET /api/v1/admin/pages?page=1&limit=20\n// GET /api/v1/admin/pages?visibility=public\n// GET /api/v1/admin/pages?visibility=registered\n// GET /api/v1/admin/pages?authorId=<id>\n\n// http://localhost:{{port}}/api/v1/admin/pages?page=1&limit=20&visibility=public&authorId=6aa2cfce102f1f260ac1d59f",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/pages?page=1&limit=20&visibility=public&authorId=6aa2cfce102f1f260ac1d59f",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "pages"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "visibility",
+                      "value": "public"
+                    },
+                    {
+                      "key": "authorId",
+                      "value": "6aa2cfce102f1f260ac1d59f"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Pages",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "// {\n//   \"title\": \"Website Development Porfolio\",\n//   \"content\": \"A personal playground for 12+ years of product design bringing together product, UX, AI, and design systems. Take your time with hidden interactions and details throughout the experience\",\n//   \"visibility\" : \"public\"\n// }\n\n{\n    \"slug\" : \"\"\n    // \"content\" : \"Legency Media's agency site combines bold typography, interactive dithering and fluid motion to showcase its work across Webflow, search, AI visibility and conversion.\"\n\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/pages/6aba3a3de75925b3aec7e6c7",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "pages",
+                    "6aba3a3de75925b3aec7e6c7"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Pages",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/pages/6aba5b674b9982e2f951c103",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "pages",
+                    "6aba5b674b9982e2f951c103"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public links",
+      "item": [
+        {
+          "name": "health",
+          "request": {
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "http://localhost:{{port}}/api/v1/customers",
+              "raw": "http://localhost:{{port}}/health",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "public user registration status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/settings",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -293,51 +705,14 @@
               "path": [
                 "api",
                 "v1",
-                "customers"
+                "settings"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Update customer",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"dateOfBirth\": \"15-12-1990\",\n//   \"addressLine1\": \"12 MG Road\",\n//   \"addressLine2\": \"Near Metro Station\",\n//   \"city\": \"Bengaluru\",\n//   \"state\": \"Karnataka\",\n//   \"pinCode\": \"560001\"\n// }\n\n{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"rahulsharma\",\n  \"email\": \"rahul@example.com\",\n  \"altEmail\": \"rahul.personal@example.com\",\n  \"phone\": \"9876543210\",\n  \"dateOfBirth\": \"15-12-1990\",\n  \"addressLine1\": \"12 MG Road\",\n  \"addressLine2\": \"Near Metro Station\",\n  \"city\": \"Bengaluru\",\n  \"state\": \"Karnataka\",\n  \"pinCode\": \"560001\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:{{port}}/api/v1/customers/:id",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "api",
-                "v1",
-                "customers",
-                ":id"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": ""
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Search customers",
+          "name": "Get pages by slug",
           "protocolProfileBehavior": {
             "disableBodyPruning": true
           },
@@ -346,15 +721,10 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"rahulsharma\",\n  \"email\": \"rahul@example.com\",\n  \"phone\": \"6952365414\",\n  \"password\": \"Password@123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "// {\n//   \"title\": \"About Us\",\n//   \"content\": \"About Us page\",\n//   \"visibility\" : \"public\"/\"registered\"\n// }\n\n{\n  \"title\": \"Website Development\",\n  \"content\": \"With extensive experience in providing effective web and mobility solutions, we help our clients scale-up their business and generate high revenue. Our expert professionals work diligently to customize business solutions for your specific industry niche by conducting thorough market research and competitor analysis.\",\n  \"visibility\" : \"registered\"\n}"
             },
             "url": {
-              "raw": "http://localhost:{{port}}/api/v1/customers?search=6545859575",
+              "raw": "http://localhost:{{port}}/api/v1/pages/about-uss",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -363,136 +733,14 @@
               "path": [
                 "api",
                 "v1",
-                "customers"
-              ],
-              "query": [
-                {
-                  "key": "search",
-                  "value": "6545859575"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Change customer status",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:{{port}}/api/v1/customers/6aacc9f29bc6df245254ccbc/status",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "api",
-                "v1",
-                "customers",
-                "6aacc9f29bc6df245254ccbc",
-                "status"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Change customer password",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"new_password\": \"sadsad\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:{{port}}/api/v1/customers/6aacc9f29bc6df245254ccbc/password",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "api",
-                "v1",
-                "customers",
-                "6aacc9f29bc6df245254ccbc",
-                "password"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get customers by ID",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"rahulsharma\",\n  \"email\": \"rahul@example.com\",\n  \"phone\": \"6952365414\",\n  \"password\": \"Password@123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:{{port}}/api/v1/customers/6aae0a4123727bd8c5e1f85e",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "api",
-                "v1",
-                "customers",
-                "6aae0a4123727bd8c5e1f85e"
+                "pages",
+                "about-uss"
               ]
             }
           },
           "response": []
         }
       ]
-    },
-    {
-      "name": "health",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "http://localhost:{{port}}/health",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "{{port}}",
-          "path": [
-            "health"
-          ]
-        }
-      },
-      "response": []
     }
   ],
   "variable": [
