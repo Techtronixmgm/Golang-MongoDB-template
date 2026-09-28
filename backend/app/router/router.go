@@ -7,6 +7,7 @@ import (
 	mongorepo "basic-app/repository/mongo"
 	"basic-app/services"
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -21,7 +22,21 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 
 	// Dependencies
 	userRepository := mongorepo.NewUserRepository(database)
-	authService := services.NewAuthService(userRepository, cfg)
+
+	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
+	settingsService := services.NewSettingsService(settingsRepository)
+	authService := services.NewAuthService(userRepository, settingsService, cfg)
+	settingsCtx, cancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+	defer cancel()
+
+	if err := settingsRepository.EnsureDefaults(settingsCtx); err != nil {
+		log.Printf("Failed to initialize application settings: %v", err)
+		panic(err)
+	}
+
 	refreshToken := func(
 		ctx context.Context,
 		refreshToken string,
@@ -48,7 +63,7 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	userService := services.NewUserService(userRepository)
 	authHandler := handler.NewAuthHandler(authService, cfg)
 	userHandler := handler.NewUserHandler(userService)
-
+	settingsHandler := handler.NewSettingsHandler(settingsService)
 	// Global/Public Endpoints
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -112,5 +127,10 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	customerRoutes.PATCH("/:id/status", userHandler.UpdateUserStatus)
 	customerRoutes.PATCH("/:id/password", userHandler.ChangeUserPassword)
 
+	r.GET("/api/v1/settings", settingsHandler.GetPublicSettings)
+
+	protectedSettings := r.Group("/api/v1/admin/settings")
+	protectedSettings.Use(authMiddleware, auth.RequireRoles("admin"))
+	protectedSettings.PATCH("", settingsHandler.Update)
 	return r
 }

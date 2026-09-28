@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"basic-app/dto"
-	"basic-app/repository"
 	"basic-app/services"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +45,7 @@ func (h *UserHandler) Me(c *gin.Context) {
 		userIDString,
 	)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, services.ErrUserNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})
@@ -97,7 +96,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrUserNotFound):
+		case errors.Is(err, services.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})
@@ -201,7 +200,7 @@ func (h *UserHandler) UpdateCustomer(c *gin.Context) {
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, repository.ErrUserNotFound):
+		case errors.Is(err, services.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "customer not found",
 			})
@@ -288,7 +287,7 @@ func (h *UserHandler) GetCustomerByID(c *gin.Context) {
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, repository.ErrUserNotFound):
+		case errors.Is(err, services.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "customer not found",
 			})
@@ -347,7 +346,7 @@ func (h *UserHandler) UpdateUserStatus(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrUserNotFound):
+		case errors.Is(err, services.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})
@@ -394,7 +393,7 @@ func (h *UserHandler) ChangeUserPassword(c *gin.Context) {
 		&req,
 	); err != nil {
 		switch {
-		case errors.Is(err, repository.ErrUserNotFound):
+		case errors.Is(err, services.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})

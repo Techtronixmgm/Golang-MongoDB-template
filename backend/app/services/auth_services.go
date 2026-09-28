@@ -6,6 +6,7 @@ import (
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/repository"
+
 	"basic-app/validation"
 	"context"
 	"crypto/hmac"
@@ -17,17 +18,20 @@ import (
 )
 
 type AuthService struct {
-	userRepository repository.UserRepository
-	config         config.Config
+	userRepository  repository.UserRepository
+	settingsService *SettingsService
+	config          config.Config
 }
 
 func NewAuthService(
 	userRepository repository.UserRepository,
+	settingsService *SettingsService,
 	cfg config.Config,
 ) *AuthService {
 	return &AuthService{
-		userRepository: userRepository,
-		config:         cfg,
+		userRepository:  userRepository,
+		settingsService: settingsService,
+		config:          cfg,
 	}
 }
 
@@ -37,6 +41,16 @@ func (s *AuthService) RegisterUser(
 	ctx context.Context,
 	req *dto.RegisterRequest,
 ) (*models.User, error) {
+
+	registrationEnabled, err := s.settingsService.IsRegistrationEnabled(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !registrationEnabled {
+		return nil, ErrRegistrationDisabled
+	}
+
 	firstName, err := validation.ValidateName(
 		req.FirstName,
 		"first name",
@@ -87,7 +101,7 @@ func (s *AuthService) RegisterUser(
 		return nil, ErrEmailAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -103,7 +117,7 @@ func (s *AuthService) RegisterUser(
 
 		if err != nil && !errors.Is(
 			err,
-			repository.ErrUserNotFound,
+			ErrUserNotFound,
 		) {
 			return nil, err
 		}
@@ -114,7 +128,7 @@ func (s *AuthService) RegisterUser(
 		return nil, ErrUsernameAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -123,7 +137,7 @@ func (s *AuthService) RegisterUser(
 		return nil, ErrPhoneAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -246,7 +260,7 @@ func (s *AuthService) Login(
 		identifier,
 	)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			return nil, ErrInvalidCredentials
 		}
 
@@ -319,7 +333,7 @@ func (s *AuthService) RefreshToken(
 
 	user, err := s.userRepository.FindByID(ctx, claims.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			return nil, ErrInvalidRefreshToken
 		}
 
@@ -390,7 +404,7 @@ func (s *AuthService) Logout(
 
 	user, err := s.userRepository.FindByID(ctx, claims.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, ErrUserNotFound) {
 			return ErrInvalidRefreshToken
 		}
 

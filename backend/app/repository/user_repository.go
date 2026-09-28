@@ -2,12 +2,9 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"basic-app/models"
 )
-
-var ErrUserNotFound = errors.New("user not found")
 
 type CustomerListFilter struct {
 	Status *bool

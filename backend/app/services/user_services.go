@@ -14,6 +14,7 @@ import (
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/repository"
+
 	"basic-app/validation"
 
 	"golang.org/x/crypto/bcrypt"
@@ -215,7 +216,7 @@ func (s *UserService) UpdateProfile(
 		}
 
 		if err != nil &&
-			!errors.Is(err, repository.ErrUserNotFound) {
+			!errors.Is(err, ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -234,7 +235,7 @@ func (s *UserService) UpdateProfile(
 		}
 
 		if err != nil &&
-			!errors.Is(err, repository.ErrUserNotFound) {
+			!errors.Is(err, ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -251,7 +252,7 @@ func (s *UserService) UpdateProfile(
 		}
 
 		if err != nil &&
-			!errors.Is(err, repository.ErrUserNotFound) {
+			!errors.Is(err, ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -268,7 +269,7 @@ func (s *UserService) UpdateProfile(
 		}
 
 		if err != nil &&
-			!errors.Is(err, repository.ErrUserNotFound) {
+			!errors.Is(err, ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -461,7 +462,7 @@ func (s *UserService) CreateCustomer(
 		return nil, ErrEmailAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -475,7 +476,7 @@ func (s *UserService) CreateCustomer(
 		}
 
 		if err != nil &&
-			!errors.Is(err, repository.ErrUserNotFound) {
+			!errors.Is(err, ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -485,7 +486,7 @@ func (s *UserService) CreateCustomer(
 		return nil, ErrUsernameAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -494,7 +495,7 @@ func (s *UserService) CreateCustomer(
 		return nil, ErrPhoneAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, ErrUserNotFound) {
 		return nil, err
 	}
 

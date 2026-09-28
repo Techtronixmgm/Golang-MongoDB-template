@@ -9,6 +9,7 @@ import (
 
 	"basic-app/models"
 	"basic-app/repository"
+	"basic-app/services"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -90,7 +91,7 @@ func (r *UserRepository) FindByID(
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, repository.ErrUserNotFound
+			return nil, services.ErrUserNotFound
 		}
 
 		return nil, err
@@ -120,7 +121,7 @@ func (r *UserRepository) FindByUsername(
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, repository.ErrUserNotFound
+			return nil, services.ErrUserNotFound
 		}
 
 		return nil, err
@@ -174,7 +175,7 @@ func (r *UserRepository) Update(
 	}
 
 	if result.MatchedCount == 0 {
-		return repository.ErrUserNotFound
+		return services.ErrUserNotFound
 	}
 
 	return nil
@@ -214,7 +215,7 @@ func (r *UserRepository) UpdateProfilePic(
 	}
 
 	if result.MatchedCount == 0 {
-		return repository.ErrUserNotFound
+		return services.ErrUserNotFound
 	}
 
 	return nil
@@ -254,7 +255,7 @@ func (r *UserRepository) UpdatePassword(
 	}
 
 	if result.MatchedCount == 0 {
-		return repository.ErrUserNotFound
+		return services.ErrUserNotFound
 	}
 
 	return nil
@@ -297,7 +298,7 @@ func (r *UserRepository) UpdateRefreshToken(
 	}
 
 	if result.MatchedCount == 0 {
-		return repository.ErrUserNotFound
+		return services.ErrUserNotFound
 	}
 
 	return nil
@@ -337,7 +338,7 @@ func (r *UserRepository) UserStatus(
 	}
 
 	if result.MatchedCount == 0 {
-		return repository.ErrUserNotFound
+		return services.ErrUserNotFound
 	}
 
 	return nil
@@ -368,7 +369,7 @@ func (r *UserRepository) Delete(
 	}
 
 	if result.DeletedCount == 0 {
-		return repository.ErrUserNotFound
+		return services.ErrUserNotFound
 	}
 
 	return nil
@@ -378,7 +379,7 @@ func (r *UserRepository) FindByPhone(
 	ctx context.Context,
 	phone string,
 ) (*models.User, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, databaseTimeout)
 	defer cancel()
 
 	var user models.User
@@ -389,7 +390,7 @@ func (r *UserRepository) FindByPhone(
 	).Decode(&user)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, repository.ErrUserNotFound
+		return nil, services.ErrUserNotFound
 	}
 
 	if err != nil {
@@ -403,7 +404,7 @@ func (r *UserRepository) FindByAnyEmail(
 	ctx context.Context,
 	email string,
 ) (*models.User, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, databaseTimeout)
 	defer cancel()
 
 	var user models.User
@@ -418,7 +419,7 @@ func (r *UserRepository) FindByAnyEmail(
 	err := r.collection.FindOne(ctx, filter).Decode(&user)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, repository.ErrUserNotFound
+		return nil, services.ErrUserNotFound
 	}
 
 	if err != nil {
@@ -432,7 +433,7 @@ func (r *UserRepository) FindByLoginIdentifier(
 	ctx context.Context,
 	identifier string,
 ) (*models.User, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, databaseTimeout)
 	defer cancel()
 
 	var user models.User
@@ -448,7 +449,7 @@ func (r *UserRepository) FindByLoginIdentifier(
 	err := r.collection.FindOne(ctx, filter).Decode(&user)
 
 	if errors.Is(err, mongodriver.ErrNoDocuments) {
-		return nil, repository.ErrUserNotFound
+		return nil, services.ErrUserNotFound
 	}
 
 	if err != nil {
