@@ -782,8 +782,15 @@ func (s *UserService) DisableTwoFactor(
 		return ErrTwoFactorNotEnabled
 	}
 
-	if err := s.totpService.VerifyCode(
+	decryptedSecret, err := s.totpEncryptionService.Decrypt(
 		user.TwoFactorSecret,
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := s.totpService.VerifyCode(
+		decryptedSecret,
 		code,
 	); err != nil {
 		return err

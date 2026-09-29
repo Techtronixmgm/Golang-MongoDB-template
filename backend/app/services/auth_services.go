@@ -22,6 +22,7 @@ type AuthService struct {
 	refreshTokenRepository repository.RefreshTokenRepository
 	settingsService        *SettingsService
 	totpService            *TOTPService
+	totpEncryptionService  *TOTPEncryptionService
 	config                 config.Config
 }
 
@@ -30,6 +31,7 @@ func NewAuthService(
 	refreshTokenRepository repository.RefreshTokenRepository,
 	settingsService *SettingsService,
 	totpService *TOTPService,
+	totpEncryptionService *TOTPEncryptionService,
 	cfg config.Config,
 ) *AuthService {
 	return &AuthService{
@@ -37,6 +39,7 @@ func NewAuthService(
 		refreshTokenRepository: refreshTokenRepository,
 		settingsService:        settingsService,
 		totpService:            totpService,
+		totpEncryptionService:  totpEncryptionService,
 		config:                 cfg,
 	}
 }
@@ -430,8 +433,15 @@ func (s *AuthService) VerifyTwoFactorLogin(
 		return nil, ErrInvalidCredentials
 	}
 
-	if err := s.totpService.VerifyCode(
+	decryptedSecret, err := s.totpEncryptionService.Decrypt(
 		user.TwoFactorSecret,
+	)
+	if err != nil {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	if err := s.totpService.VerifyCode(
+		decryptedSecret,
 		code,
 	); err != nil {
 		return nil, ErrInvalidTOTPCode
