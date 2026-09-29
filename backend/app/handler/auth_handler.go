@@ -340,7 +340,7 @@ func (h *AuthHandler) StartTwoFactorSetup(c *gin.Context) {
 		return
 	}
 
-	secret, err := h.userService.StartTwoFactorSetup(
+	secret, otpauthURL, err := h.userService.StartTwoFactorSetup(
 		c.Request.Context(),
 		userID,
 	)
@@ -371,8 +371,9 @@ func (h *AuthHandler) StartTwoFactorSetup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "two-factor authentication setup started",
-		"secret":  secret,
+		"message":    "two-factor authentication setup started",
+		"secret":     secret,
+		"otpauthUrl": otpauthURL,
 	})
 }
 

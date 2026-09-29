@@ -649,38 +649,38 @@ func (s *UserService) ListCustomers(
 func (s *UserService) StartTwoFactorSetup(
 	ctx context.Context,
 	userID string,
-) (string, error) {
+) (string, string, error) {
 	userID = strings.TrimSpace(userID)
 
 	if userID == "" {
-		return "", ErrInvalidUserID
+		return "", "", ErrInvalidUserID
 	}
 
 	user, err := s.userRepository.FindByID(ctx, userID)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if !user.Status {
-		return "", ErrInvalidCredentials
+		return "", "", ErrInvalidCredentials
 	}
 
 	if user.TwoFactorEnabled {
-		return "", ErrTwoFactorAlreadyEnabled
+		return "", "", ErrTwoFactorAlreadyEnabled
 	}
 
-	secret, err := s.totpService.GenerateSecret()
+	setup, err := s.totpService.GenerateSecret(user.Username)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	user.TwoFactorPendingSecret = secret
+	user.TwoFactorPendingSecret = setup.Secret
 
 	if err := s.userRepository.Update(ctx, user); err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return secret, nil
+	return setup.Secret, setup.OTPAuthURL, nil
 }
 
 func (s *UserService) VerifyTwoFactorSetup(

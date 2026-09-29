@@ -27,6 +27,7 @@ type Config struct {
 
 	CookieSameSite string
 	AllowedOrigins []string
+	TOTPIssuer     string
 }
 
 func Load() (Config, error) {
@@ -195,6 +196,11 @@ func Load() (Config, error) {
 		}
 	}
 
+	tOTPIssuer, err := extractEnv("TOTP_ISSUER")
+	if err != nil {
+		return Config{}, err
+	}
+
 	config := Config{
 		MongoUri:                         mongoURI,
 		MongoDB:                          mongoDB,
@@ -209,6 +215,7 @@ func Load() (Config, error) {
 		RefreshTokenRevokedRetentionDays: refreshTokenRevokedRetentionDays,
 		CookieSameSite:                   cookieSameSite,
 		AllowedOrigins:                   allowedOrigins,
+		TOTPIssuer:                       tOTPIssuer,
 	}
 
 	if err := config.Validate(); err != nil {
@@ -303,6 +310,10 @@ func (c Config) Validate() error {
 				"ALLOWED_ORIGINS contains an empty origin",
 			)
 		}
+	}
+
+	if strings.TrimSpace(c.TOTPIssuer) == "" {
+		return errors.New("TOTP issuer is required")
 	}
 
 	return nil

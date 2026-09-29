@@ -8,26 +8,38 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
-type TOTPService struct{}
-
-func NewTOTPService() *TOTPService {
-	return &TOTPService{}
+type TOTPService struct {
+	issuer string
 }
 
-func (s *TOTPService) GenerateSecret() (string, error) {
+func NewTOTPService(issuer string) *TOTPService {
+	return &TOTPService{
+		issuer: issuer,
+	}
+}
+
+type TOTPSetup struct {
+	Secret     string
+	OTPAuthURL string
+}
+
+func (s *TOTPService) GenerateSecret(accountName string) (*TOTPSetup, error) {
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "Basic App",
-		AccountName: "test",
+		Issuer:      s.issuer,
+		AccountName: accountName,
 		Period:      30,
 		SecretSize:  20,
 		Digits:      otp.DigitsSix,
 		Algorithm:   otp.AlgorithmSHA1,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return key.Secret(), nil
+	return &TOTPSetup{
+		Secret:     key.Secret(),
+		OTPAuthURL: key.URL(),
+	}, nil
 }
 
 func (s *TOTPService) VerifyCode(

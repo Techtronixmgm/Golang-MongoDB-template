@@ -67,7 +67,7 @@ func NewRouter(
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
 	settingsService := services.NewSettingsService(settingsRepository)
-	totpService := services.NewTOTPService()
+	totpService := services.NewTOTPService(cfg.TOTPIssuer)
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(database)
 
 	authService := services.NewAuthService(
