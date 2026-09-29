@@ -211,7 +211,7 @@ func (h *AuthHandler) setAuthCookie(
 		MaxAge:   int(time.Until(expiresAt).Seconds()),
 		HttpOnly: true,
 		Secure:   h.config.CookieSecure,
-		// SameSite: cookieSameSite(h.config.CookieSameSite),
+		SameSite: cookieSameSite(h.config.CookieSameSite),
 	})
 }
 

@@ -24,6 +24,9 @@ type Config struct {
 	CookieSecure                     bool
 	GinMode                          string
 	RefreshTokenRevokedRetentionDays int
+
+	CookieSameSite string
+	AllowedOrigins []string
 }
 
 func Load() (Config, error) {
@@ -116,9 +119,60 @@ func Load() (Config, error) {
 		)
 	}
 
+	// Cookie SameSite
+	cookieSameSite, err := extractEnv(
+		"COOKIE_SAME_SITE",
+	)
+	if err != nil {
+		return Config{}, err
+	}
+
+	// Normalize Cookie SameSite value.
+	switch strings.ToLower(cookieSameSite) {
+	case "strict":
+		cookieSameSite = "Strict"
+	case "lax":
+		cookieSameSite = "Lax"
+	case "none":
+		cookieSameSite = "None"
+	default:
+		return Config{}, errors.New(
+			"COOKIE_SAME_SITE must be one of: Strict, Lax, None",
+		)
+	}
+
+	// SameSite=None requires Secure=true.
+	if cookieSameSite == "None" && !cookieSecure {
+		return Config{}, errors.New(
+			"COOKIE_SAME_SITE=None requires COOKIE_SECURE=true",
+		)
+	}
+
 	ginMode, err := extractEnv("GIN_MODE")
 	if err != nil {
 		return Config{}, err
+	}
+
+	allowedOriginsStr, err := extractEnv("ALLOWED_ORIGINS")
+	if err != nil {
+		return Config{}, err
+	}
+
+	allowedOrigins := strings.Split(
+		allowedOriginsStr,
+		",",
+	)
+
+	for i := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(
+			allowedOrigins[i],
+		)
+
+		if allowedOrigins[i] == "" {
+			return Config{}, errors.New(
+				"ALLOWED_ORIGINS contains an empty origin",
+			)
+		}
 	}
 
 	// Refresh token revoked retention.
@@ -153,6 +207,8 @@ func Load() (Config, error) {
 		CookieSecure:                     cookieSecure,
 		GinMode:                          ginMode,
 		RefreshTokenRevokedRetentionDays: refreshTokenRevokedRetentionDays,
+		CookieSameSite:                   cookieSameSite,
+		AllowedOrigins:                   allowedOrigins,
 	}
 
 	if err := config.Validate(); err != nil {
@@ -212,6 +268,41 @@ func (c Config) Validate() error {
 
 	if c.GinMode == "" {
 		return errors.New("Gin mode is missing")
+	}
+
+	if c.CookieSameSite == "" {
+		return errors.New(
+			"cookie SameSite setting is missing",
+		)
+	}
+
+	// Validate supported SameSite values.
+	switch c.CookieSameSite {
+	case "Strict", "Lax", "None":
+	default:
+		return errors.New(
+			"cookie SameSite must be one of: Strict, Lax, None",
+		)
+	}
+
+	// SameSite=None requires Secure=true.
+	if c.CookieSameSite == "None" && !c.CookieSecure {
+		return errors.New(
+			"cookie SameSite=None requires CookieSecure=true",
+		)
+	}
+
+	if len(c.AllowedOrigins) == 0 {
+		return errors.New("ALLOWED_ORIGINS missing")
+	}
+
+	// Validate that every configured origin is non-empty.
+	for _, origin := range c.AllowedOrigins {
+		if strings.TrimSpace(origin) == "" {
+			return errors.New(
+				"ALLOWED_ORIGINS contains an empty origin",
+			)
+		}
 	}
 
 	return nil
