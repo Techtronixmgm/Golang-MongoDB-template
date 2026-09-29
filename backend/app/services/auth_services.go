@@ -311,6 +311,15 @@ func (s *AuthService) Login(
 	}
 
 	now := time.Now().UTC()
+
+	if err := s.userRepository.UpdateLastLoginAt(
+		ctx,
+		user.ID.Hex(),
+		now,
+	); err != nil {
+		return nil, err
+	}
+
 	user.LastLoginAt = &now
 
 	return &dto.LoginResult{
@@ -460,6 +469,15 @@ func (s *AuthService) VerifyTwoFactorLogin(
 	}
 
 	now := time.Now().UTC()
+
+	if err := s.userRepository.UpdateLastLoginAt(
+		ctx,
+		user.ID.Hex(),
+		now,
+	); err != nil {
+		return nil, err
+	}
+
 	user.LastLoginAt = &now
 
 	return &dto.LoginResult{

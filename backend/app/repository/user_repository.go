@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"basic-app/models"
 )
@@ -52,4 +53,9 @@ type UserRepository interface {
 		ctx context.Context,
 		filter CustomerListFilter,
 	) ([]models.User, int64, error)
+	UpdateLastLoginAt(
+		ctx context.Context,
+		userID string,
+		lastLoginAt time.Time,
+	) error
 }
