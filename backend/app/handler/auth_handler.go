@@ -346,6 +346,11 @@ func (h *AuthHandler) StartTwoFactorSetup(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
+		case errors.Is(err, services.ErrTwoFactorAlreadyEnabled):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": err.Error(),
+			})
+
 		case errors.Is(err, services.ErrInvalidUserID):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
@@ -406,6 +411,11 @@ func (h *AuthHandler) VerifyTwoFactorSetup(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
+		case errors.Is(err, services.ErrTwoFactorAlreadyEnabled):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": err.Error(),
+			})
+
 		case errors.Is(err, services.ErrTwoFactorSetupNotStarted):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),

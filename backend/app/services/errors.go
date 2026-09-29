@@ -39,4 +39,5 @@ var (
 	ErrInvalidTOTPCode          = errors.New("invalid TOTP code")
 	ErrTwoFactorSetupNotStarted = errors.New("two-factor setup has not been started")
 	ErrTwoFactorNotEnabled      = errors.New("two-factor authentication is not enabled")
+	ErrTwoFactorAlreadyEnabled  = errors.New("two-factor authentication is already enabled")
 )

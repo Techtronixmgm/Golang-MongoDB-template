@@ -665,6 +665,10 @@ func (s *UserService) StartTwoFactorSetup(
 		return "", ErrInvalidCredentials
 	}
 
+	if user.TwoFactorEnabled {
+		return "", ErrTwoFactorAlreadyEnabled
+	}
+
 	secret, err := s.totpService.GenerateSecret()
 	if err != nil {
 		return "", err
@@ -697,6 +701,10 @@ func (s *UserService) VerifyTwoFactorSetup(
 
 	if !user.Status {
 		return ErrInvalidCredentials
+	}
+
+	if user.TwoFactorEnabled {
+		return ErrTwoFactorAlreadyEnabled
 	}
 
 	pendingSecret := strings.TrimSpace(
