@@ -3,6 +3,7 @@ package router
 import (
 	"basic-app/auth"
 	"basic-app/config"
+
 	"basic-app/handler"
 	mongorepo "basic-app/repository/mongo"
 	"basic-app/services"
@@ -66,7 +67,7 @@ func NewRouter(
 	userRepository := mongorepo.NewUserRepository(database)
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
-	settingsService := services.NewSettingsService(settingsRepository)
+	settingsService := services.NewSettingsService(settingsRepository, cfg)
 	totpService := services.NewTOTPService(cfg.TOTPIssuer)
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(database)
 

@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
+	"basic-app/config"
 	"basic-app/dto"
 	"basic-app/services"
 
@@ -89,9 +91,23 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 			*req.TwoFactorEnabled,
 			actorID,
 		); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "failed to update two-factor setting",
-			})
+			switch {
+			case errors.Is(err, config.ErrTOTPEncryptionKeyMissing):
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "2FA cannot be enabled because TOTP encryption key is not configured",
+				})
+
+			case errors.Is(err, config.ErrTOTPEncryptionKeyTooWeak):
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "2FA cannot be enabled because TOTP encryption key is too weak",
+				})
+
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "failed to update two-factor setting",
+				})
+			}
+
 			return
 		}
 	}

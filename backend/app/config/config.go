@@ -10,6 +10,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var (
+	ErrTOTPEncryptionKeyMissing = errors.New("TOTP encryption key is required to enable 2FA")
+	ErrTOTPEncryptionKeyTooWeak = errors.New("TOTP encryption key must be at least 32 bytes")
+)
+
 type Config struct {
 	MongoUri               string
 	MongoDB                string
@@ -25,9 +30,10 @@ type Config struct {
 	GinMode                          string
 	RefreshTokenRevokedRetentionDays int
 
-	CookieSameSite string
-	AllowedOrigins []string
-	TOTPIssuer     string
+	CookieSameSite    string
+	AllowedOrigins    []string
+	TOTPIssuer        string
+	TOTPEncryptionKey string
 }
 
 func Load() (Config, error) {
@@ -201,6 +207,12 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
+	// TOTP encryption key is intentionally optional at startup.
+	// It is required only when 2FA is enabled or used.
+	tOTPEncryptionKey := strings.TrimSpace(
+		os.Getenv("TOTP_ENCRYPTION_KEY"),
+	)
+
 	config := Config{
 		MongoUri:                         mongoURI,
 		MongoDB:                          mongoDB,
@@ -216,6 +228,7 @@ func Load() (Config, error) {
 		CookieSameSite:                   cookieSameSite,
 		AllowedOrigins:                   allowedOrigins,
 		TOTPIssuer:                       tOTPIssuer,
+		TOTPEncryptionKey:                tOTPEncryptionKey,
 	}
 
 	if err := config.Validate(); err != nil {
@@ -330,4 +343,21 @@ func extractEnv(key string) (string, error) {
 	}
 
 	return val, nil
+}
+
+// ValidateTOTPEncryptionKey validates the encryption secret
+// before 2FA is enabled or used.
+
+func (c Config) ValidateTOTPEncryptionKey() error {
+	key := strings.TrimSpace(c.TOTPEncryptionKey)
+
+	if key == "" {
+		return ErrTOTPEncryptionKeyMissing
+	}
+
+	if len([]byte(key)) < 32 {
+		return ErrTOTPEncryptionKeyTooWeak
+	}
+
+	return nil
 }
