@@ -136,7 +136,14 @@ func NewRouter(
 	// Services / handlers
 	// ------------------------------------------------------------------
 
-	userService := services.NewUserService(userRepository, totpService)
+	totpEncryptionService, err := services.NewTOTPEncryptionService(
+		cfg.TOTPEncryptionKey,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	userService := services.NewUserService(userRepository, totpService, totpEncryptionService)
 	authHandler := handler.NewAuthHandler(authService, userService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 

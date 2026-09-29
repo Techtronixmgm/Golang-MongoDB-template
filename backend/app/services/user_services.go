@@ -21,17 +21,20 @@ import (
 )
 
 type UserService struct {
-	userRepository repository.UserRepository
-	totpService    *TOTPService
+	userRepository        repository.UserRepository
+	totpService           *TOTPService
+	totpEncryptionService *TOTPEncryptionService
 }
 
 func NewUserService(
 	userRepository repository.UserRepository,
 	totpService *TOTPService,
+	totpEncryptionService *TOTPEncryptionService,
 ) *UserService {
 	return &UserService{
-		userRepository: userRepository,
-		totpService:    totpService,
+		userRepository:        userRepository,
+		totpService:           totpService,
+		totpEncryptionService: totpEncryptionService,
 	}
 }
 
@@ -674,7 +677,14 @@ func (s *UserService) StartTwoFactorSetup(
 		return "", "", err
 	}
 
-	user.TwoFactorPendingSecret = setup.Secret
+	encryptedSecret, err := s.totpEncryptionService.Encrypt(
+		setup.Secret,
+	)
+	if err != nil {
+		return "", "", err
+	}
+
+	user.TwoFactorPendingSecret = encryptedSecret
 
 	if err := s.userRepository.Update(ctx, user); err != nil {
 		return "", "", err
@@ -715,14 +725,28 @@ func (s *UserService) VerifyTwoFactorSetup(
 		return ErrTwoFactorSetupNotStarted
 	}
 
-	if err := s.totpService.VerifyCode(
+	decryptedSecret, err := s.totpEncryptionService.Decrypt(
 		pendingSecret,
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := s.totpService.VerifyCode(
+		decryptedSecret,
 		code,
 	); err != nil {
 		return err
 	}
 
-	user.TwoFactorSecret = pendingSecret
+	encryptedSecret, err := s.totpEncryptionService.Encrypt(
+		decryptedSecret,
+	)
+	if err != nil {
+		return err
+	}
+
+	user.TwoFactorSecret = encryptedSecret
 	user.TwoFactorPendingSecret = ""
 	user.TwoFactorEnabled = true
 
