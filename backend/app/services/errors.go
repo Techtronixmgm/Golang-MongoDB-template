@@ -22,7 +22,7 @@ var (
 	// User
 	ErrCannotChangeOwnStatus       = errors.New("admin cannot change their own account status")
 	ErrUserNotFound                = errors.New("user not found")
-	ErrRegistrationDisabled        = errors.New("user registration is currently disabled by the adminisistrator")
+	ErrRegistrationDisabled        = errors.New("user registration is currently disabled by the administrator")
 	ErrApplicationSettingsNotFound = errors.New("application settings not found")
 
 	// RefreshToken
