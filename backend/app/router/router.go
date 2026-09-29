@@ -256,6 +256,7 @@ func NewRouter(
 		auth.RequireRoles("admin"),
 	)
 	protectedSettings.PATCH("", settingsHandler.Update)
+	protectedSettings.GET("", settingsHandler.GetPrivateSettings)
 
 	// ------------------------------------------------------------------
 	// Pages

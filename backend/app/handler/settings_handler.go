@@ -32,6 +32,20 @@ func (h *SettingsHandler) GetPublicSettings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dto.PublicSettingsResponse{
 		RegistrationEnabled: settings.RegistrationEnabled,
+	})
+}
+
+func (h *SettingsHandler) GetPrivateSettings(c *gin.Context) {
+	settings, err := h.settingsService.GetSettings(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to get settings",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.PrivateSettingsResponse{
+		RegistrationEnabled: settings.RegistrationEnabled,
 		TwoFactorEnabled:    settings.TwoFactorEnabled,
 	})
 }
