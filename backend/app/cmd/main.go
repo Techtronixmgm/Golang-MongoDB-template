@@ -73,7 +73,7 @@ func main() {
 
 	// middleware.StartCleanup()
 
-	engine := router.NewRouter(db, cfg)
+	engine := router.NewRouter(client, db, cfg)
 
 	addr := ":" + cfg.ServerPort
 

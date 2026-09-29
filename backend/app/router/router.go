@@ -15,18 +15,42 @@ import (
 	mongo "go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
+func NewRouter(
+	client *mongo.Client,
+	database *mongo.Database,
+	cfg config.Config,
+) *gin.Engine {
 	r := gin.Default()
 
-	r.Static("/Uploads", "./Uploads") // Expose file uploads
+	// Custom middleware.
+	// Uncomment these when you want request ID and structured logging.
+	r.Use(
+		gin.Recovery(),
+		// middleware.RequestID(),
+		// middleware.Logger(),
+	)
 
+	r.Static("/Uploads", "./Uploads")
+
+	// ------------------------------------------------------------------
 	// Dependencies
+	// ------------------------------------------------------------------
+
 	userRepository := mongorepo.NewUserRepository(database)
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
 	settingsService := services.NewSettingsService(settingsRepository)
+
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(database)
-	authService := services.NewAuthService(userRepository, refreshTokenRepository, settingsService, cfg)
+
+	authService := services.NewAuthService(
+		userRepository,
+		refreshTokenRepository,
+		settingsService,
+		cfg,
+	)
+
+	// Initialize application settings.
 	settingsCtx, cancel := context.WithTimeout(
 		context.Background(),
 		10*time.Second,
@@ -34,9 +58,13 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	defer cancel()
 
 	if err := settingsRepository.EnsureDefaults(settingsCtx); err != nil {
-		log.Printf("Failed to initialize application settings: %v", err)
+		log.Printf("failed to initialize application settings: %v", err)
 		panic(err)
 	}
+
+	// ------------------------------------------------------------------
+	// Refresh token callback
+	// ------------------------------------------------------------------
 
 	refreshToken := func(
 		ctx context.Context,
@@ -52,6 +80,10 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 			result.RefreshExpiry,
 			nil
 	}
+
+	// ------------------------------------------------------------------
+	// Authentication middleware
+	// ------------------------------------------------------------------
 
 	authMiddleware := auth.AuthMiddleware(
 		cfg.JWTSecret,
@@ -71,15 +103,26 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 		refreshToken,
 	)
 
+	// ------------------------------------------------------------------
+	// Services / handlers
+	// ------------------------------------------------------------------
+
 	userService := services.NewUserService(userRepository)
 	authHandler := handler.NewAuthHandler(authService, cfg)
 	userHandler := handler.NewUserHandler(userService)
+
 	pageRepository := mongorepo.NewPageRepository(database)
 	pageService := services.NewPageService(pageRepository)
 	pageHandler := handler.NewPageHandler(pageService)
 
 	settingsHandler := handler.NewSettingsHandler(settingsService)
-	// Global/Public Endpoints
+
+	// ------------------------------------------------------------------
+	// Health / readiness
+	// ------------------------------------------------------------------
+
+	// Liveness:
+	// Only confirms that the application process is running.
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"ok":     true,
@@ -87,7 +130,32 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 		})
 	})
 
+	// Readiness:
+	// Confirms that the application can currently reach MongoDB.
+
+	r.GET("/ready", func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(
+			c.Request.Context(),
+			2*time.Second,
+		)
+		defer cancel()
+
+		if err := client.Ping(ctx, nil); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "not_ready",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status": "database is up",
+		})
+	})
+
+	// ------------------------------------------------------------------
 	// Authentication routes
+	// ------------------------------------------------------------------
+
 	authRoutes := r.Group("/api/v1/auth")
 	{
 		// Public
@@ -100,12 +168,15 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 		protected.Use(authMiddleware)
 
 		protected.PATCH("/password", authHandler.ChangePassword)
-		//	protected.POST("/refresh", authHandler.Refresh)
 		protected.POST("/logout", authHandler.Logout)
 		protected.PATCH("/me", userHandler.UpdateProfile)
 		protected.PATCH("/me/image", userHandler.UpdateProfilePic)
 		protected.GET("/me", userHandler.Me)
 	}
+
+	// ------------------------------------------------------------------
+	// Customer routes
+	// ------------------------------------------------------------------
 
 	customerRoutes := r.Group("/api/v1/customers")
 
@@ -115,10 +186,8 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	)
 
 	customerRoutes.POST("", userHandler.CreateCustomer)
-
 	//--------------------------------------------------------------
 	customerRoutes.GET("", userHandler.ListCustomers)
-
 	// List customers.
 	//
 	// Pagination:
@@ -136,25 +205,43 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	// GET /api/v1/customers?page=1&limit=20&status=true&search=rahul
 
 	//--------------------------------------------------------------
-
 	customerRoutes.GET("/:id", userHandler.GetCustomerByID)
 	customerRoutes.PATCH("/:id", userHandler.UpdateCustomer)
 	customerRoutes.PATCH("/:id/status", userHandler.UpdateUserStatus)
 	customerRoutes.PATCH("/:id/password", userHandler.ChangeUserPassword)
 
+	// ------------------------------------------------------------------
+	// Application settings
+	// ------------------------------------------------------------------
+
 	r.GET("/api/v1/settings", settingsHandler.GetPublicSettings)
 
 	protectedSettings := r.Group("/api/v1/admin/settings")
-	protectedSettings.Use(authMiddleware, auth.RequireRoles("admin"))
+	protectedSettings.Use(
+		authMiddleware,
+		auth.RequireRoles("admin"),
+	)
 	protectedSettings.PATCH("", settingsHandler.Update)
 
+	// ------------------------------------------------------------------
+	// Pages
+	// ------------------------------------------------------------------
+
 	api := r.Group("/api/v1")
+
 	// Public / registered pages
-	api.GET("/pages/:slug", optionalAuthMiddleware, pageHandler.GetBySlug)
+	api.GET(
+		"/pages/:slug",
+		optionalAuthMiddleware,
+		pageHandler.GetBySlug,
+	)
 
 	// Admin pages
 	admin := api.Group("/admin")
-	admin.Use(authMiddleware, auth.RequireRoles("admin"))
+	admin.Use(
+		authMiddleware,
+		auth.RequireRoles("admin"),
+	)
 
 	admin.POST("/pages", pageHandler.Create)
 	admin.GET("/pages", pageHandler.List)
