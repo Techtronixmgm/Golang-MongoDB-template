@@ -44,6 +44,7 @@ func NewRouter(
 			"Content-Type",
 			"Accept",
 			"Authorization",
+			// "X-Request-ID",
 		},
 
 		AllowCredentials: true,
