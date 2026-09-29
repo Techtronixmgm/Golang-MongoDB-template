@@ -67,13 +67,14 @@ func NewRouter(
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
 	settingsService := services.NewSettingsService(settingsRepository)
-
+	totpService := services.NewTOTPService()
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(database)
 
 	authService := services.NewAuthService(
 		userRepository,
 		refreshTokenRepository,
 		settingsService,
+		totpService,
 		cfg,
 	)
 
@@ -134,7 +135,6 @@ func NewRouter(
 	// Services / handlers
 	// ------------------------------------------------------------------
 
-	totpService := services.NewTOTPService()
 	userService := services.NewUserService(userRepository, totpService)
 	authHandler := handler.NewAuthHandler(authService, userService, cfg)
 	userHandler := handler.NewUserHandler(userService)
@@ -190,6 +190,7 @@ func NewRouter(
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
 		authRoutes.POST("/refresh", authHandler.Refresh)
+		authRoutes.POST("2fa/verify-login", authHandler.VerifyTwoFactorLogin)
 
 		// Authenticated
 		protected := authRoutes.Group("")
@@ -204,6 +205,7 @@ func NewRouter(
 		// 2FA srtup
 		protected.POST("/2fa/setup", authHandler.StartTwoFactorSetup)
 		protected.POST("/2fa/verify-setup", authHandler.VerifyTwoFactorSetup)
+		protected.POST("/2fa/disable", authHandler.DisableTwoFactor)
 	}
 
 	// ------------------------------------------------------------------

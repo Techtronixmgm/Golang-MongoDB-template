@@ -20,6 +20,7 @@ type AuthService struct {
 	userRepository         repository.UserRepository
 	refreshTokenRepository repository.RefreshTokenRepository
 	settingsService        *SettingsService
+	totpService            *TOTPService
 	config                 config.Config
 }
 
@@ -27,12 +28,14 @@ func NewAuthService(
 	userRepository repository.UserRepository,
 	refreshTokenRepository repository.RefreshTokenRepository,
 	settingsService *SettingsService,
+	totpService *TOTPService,
 	cfg config.Config,
 ) *AuthService {
 	return &AuthService{
 		userRepository:         userRepository,
 		refreshTokenRepository: refreshTokenRepository,
 		settingsService:        settingsService,
+		totpService:            totpService,
 		config:                 cfg,
 	}
 }
@@ -255,6 +258,29 @@ func (s *AuthService) Login(
 		return nil, ErrInvalidCredentials
 	}
 
+	twoFactorEnabled, err := s.settingsService.IsTwoFactorEnabled(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if twoFactorEnabled && user.TwoFactorEnabled {
+		challengeToken, err := auth.GenerateTwoFactorChallenge(
+			user.ID.Hex(),
+			s.config.JWTSecret,
+			5,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return &dto.LoginResult{
+			User:              user,
+			TwoFactorRequired: true,
+			ChallengeToken:    challengeToken,
+		}, nil
+	}
+
 	accessToken, err := auth.GenerateToken(
 		user.ID.Hex(),
 		string(user.Role),
@@ -357,4 +383,89 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	}
 
 	return s.refreshTokenRepository.Revoke(ctx, storedToken.ID.Hex())
+}
+
+func (s *AuthService) VerifyTwoFactorLogin(
+	ctx context.Context,
+	req *dto.VerifyTwoFactorLoginRequest,
+) (*dto.LoginResult, error) {
+	challenge := strings.TrimSpace(req.ChallengeToken)
+	code := strings.TrimSpace(req.Code)
+
+	if challenge == "" || code == "" {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	claims, err := auth.ValidateTwoFactorChallenge(
+		challenge,
+		s.config.JWTSecret,
+	)
+	if err != nil {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	user, err := s.userRepository.FindByID(
+		ctx,
+		claims.UserID,
+	)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return nil, ErrInvalidCredentials
+		}
+
+		return nil, err
+	}
+
+	if !user.Status || !user.TwoFactorEnabled {
+		return nil, ErrInvalidCredentials
+	}
+
+	if err := s.totpService.VerifyCode(
+		user.TwoFactorSecret,
+		code,
+	); err != nil {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	accessToken, err := auth.GenerateToken(
+		user.ID.Hex(),
+		string(user.Role),
+		s.config.JWTSecret,
+		s.config.JWTExpiryHours,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, refreshExpiry, err := auth.GenerateRefreshToken(
+		user.ID.Hex(),
+		s.config.JWTSecret,
+		s.config.RefreshTokenExpiryDays,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshTokenModel := &models.RefreshToken{
+		UserID:    user.ID,
+		TokenHash: auth.HashRefreshToken(refreshToken),
+		ExpiresAt: refreshExpiry,
+	}
+
+	if err := s.refreshTokenRepository.Create(
+		ctx,
+		refreshTokenModel,
+	); err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+	user.LastLoginAt = &now
+
+	return &dto.LoginResult{
+		User:          user,
+		AccessToken:   accessToken,
+		RefreshToken:  refreshToken,
+		RefreshExpiry: refreshExpiry,
+	}, nil
 }

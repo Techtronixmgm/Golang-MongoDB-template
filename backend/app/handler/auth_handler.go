@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -165,24 +164,25 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "unable to login",
+			"error": "login failed",
 		})
-
-		log.Printf(
-			"login failed for identifier %q: %v",
-			req.Identifier,
-			err,
-		)
 		return
 	}
 
-	now := time.Now().UTC()
+	if result.TwoFactorRequired {
+		c.JSON(http.StatusOK, gin.H{
+			"message":           "two-factor authentication required",
+			"twoFactorRequired": true,
+			"challengeToken":    result.ChallengeToken,
+		})
+		return
+	}
 
 	h.setAuthCookie(
 		c,
 		h.config.AuthAccessCookie,
 		result.AccessToken,
-		now.Add(
+		time.Now().UTC().Add(
 			time.Duration(h.config.JWTExpiryHours)*time.Hour,
 		),
 	)
@@ -438,5 +438,107 @@ func (h *AuthHandler) VerifyTwoFactorSetup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":          "two-factor authentication enabled",
 		"twoFactorEnabled": true,
+	})
+}
+
+func (h *AuthHandler) VerifyTwoFactorLogin(c *gin.Context) {
+	var req dto.VerifyTwoFactorLoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid request body",
+		})
+		return
+	}
+
+	result, err := h.authService.VerifyTwoFactorLogin(
+		c.Request.Context(),
+		&req,
+	)
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidTOTPCode) {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "invalid two-factor code",
+			})
+			return
+		}
+
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "two-factor authentication failed",
+		})
+		return
+	}
+
+	h.setAuthCookie(
+		c,
+		h.config.AuthAccessCookie,
+		result.AccessToken,
+		time.Now().UTC().Add(
+			time.Duration(h.config.JWTExpiryHours)*time.Hour,
+		),
+	)
+
+	h.setAuthCookie(
+		c,
+		h.config.AuthRefreshCookie,
+		result.RefreshToken,
+		result.RefreshExpiry,
+	)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "login successful",
+		"user":    result.User,
+	})
+}
+
+func (h *AuthHandler) DisableTwoFactor(c *gin.Context) {
+	var req dto.DisableTwoFactorRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid request body",
+		})
+		return
+	}
+
+	userID := c.GetString("userID")
+
+	err := h.userService.DisableTwoFactor(
+		c.Request.Context(),
+		userID,
+		req.Code,
+	)
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidTOTPCode) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid two-factor code",
+			})
+			return
+		}
+
+		if errors.Is(err, services.ErrTwoFactorNotEnabled) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "two-factor authentication is not enabled",
+			})
+			return
+		}
+
+		if errors.Is(err, services.ErrInvalidUserID) ||
+			errors.Is(err, services.ErrInvalidCredentials) {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "unauthorized",
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to disable two-factor authentication",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":          "two-factor authentication disabled",
+		"twoFactorEnabled": false,
 	})
 }

@@ -724,3 +724,43 @@ func (s *UserService) VerifyTwoFactorSetup(
 
 	return nil
 }
+
+func (s *UserService) DisableTwoFactor(
+	ctx context.Context,
+	userID string,
+	code string,
+) error {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if !user.Status {
+		return ErrInvalidCredentials
+	}
+
+	if !user.TwoFactorEnabled ||
+		strings.TrimSpace(user.TwoFactorSecret) == "" {
+		return ErrTwoFactorNotEnabled
+	}
+
+	if err := s.totpService.VerifyCode(
+		user.TwoFactorSecret,
+		code,
+	); err != nil {
+		return err
+	}
+
+	user.TwoFactorEnabled = false
+	user.TwoFactorSecret = ""
+	user.TwoFactorPendingSecret = ""
+	user.BackupCodeHashes = nil
+
+	return s.userRepository.Update(ctx, user)
+}
