@@ -22,13 +22,16 @@ import (
 
 type UserService struct {
 	userRepository repository.UserRepository
+	totpService    *TOTPService
 }
 
 func NewUserService(
 	userRepository repository.UserRepository,
+	totpService *TOTPService,
 ) *UserService {
 	return &UserService{
 		userRepository: userRepository,
+		totpService:    totpService,
 	}
 }
 
@@ -641,4 +644,83 @@ func (s *UserService) ListCustomers(
 			TotalPages: totalPages,
 		},
 	}, nil
+}
+
+func (s *UserService) StartTwoFactorSetup(
+	ctx context.Context,
+	userID string,
+) (string, error) {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return "", ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+
+	if !user.Status {
+		return "", ErrInvalidCredentials
+	}
+
+	secret, err := s.totpService.GenerateSecret()
+	if err != nil {
+		return "", err
+	}
+
+	user.TwoFactorPendingSecret = secret
+
+	if err := s.userRepository.Update(ctx, user); err != nil {
+		return "", err
+	}
+
+	return secret, nil
+}
+
+func (s *UserService) VerifyTwoFactorSetup(
+	ctx context.Context,
+	userID string,
+	code string,
+) error {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if !user.Status {
+		return ErrInvalidCredentials
+	}
+
+	pendingSecret := strings.TrimSpace(
+		user.TwoFactorPendingSecret,
+	)
+
+	if pendingSecret == "" {
+		return ErrTwoFactorSetupNotStarted
+	}
+
+	if err := s.totpService.VerifyCode(
+		pendingSecret,
+		code,
+	); err != nil {
+		return err
+	}
+
+	user.TwoFactorSecret = pendingSecret
+	user.TwoFactorPendingSecret = ""
+	user.TwoFactorEnabled = true
+
+	if err := s.userRepository.Update(ctx, user); err != nil {
+		return err
+	}
+
+	return nil
 }

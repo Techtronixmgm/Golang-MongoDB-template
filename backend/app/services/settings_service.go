@@ -47,3 +47,26 @@ func (s *SettingsService) UpdateRegistrationEnabled(
 		updatedBy,
 	)
 }
+
+func (s *SettingsService) IsTwoFactorEnabled(
+	ctx context.Context,
+) (bool, error) {
+	settings, err := s.settingsRepository.Get(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return settings.TwoFactorEnabled, nil
+}
+
+func (s *SettingsService) UpdateTwoFactorEnabled(
+	ctx context.Context,
+	enabled bool,
+	updatedBy string,
+) error {
+	return s.settingsRepository.UpdateTwoFactorEnabled(
+		ctx,
+		enabled,
+		updatedBy,
+	)
+}

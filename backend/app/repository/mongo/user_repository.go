@@ -160,6 +160,11 @@ func (r *UserRepository) Update(
 			"state":          user.State,
 			"pin_code":       user.PinCode,
 
+			"two_factor_enabled":        user.TwoFactorEnabled,
+			"two_factor_secret":         user.TwoFactorSecret,
+			"two_factor_pending_secret": user.TwoFactorPendingSecret,
+			"backup_code_hashes":        user.BackupCodeHashes,
+
 			"updated_at": user.UpdatedAt,
 		},
 	}

@@ -131,14 +131,14 @@ func EnsurePageIndexes(
 			Options: options.Index().
 				SetName("page_visibility_created_at"),
 		},
-		// {
-		// 	Keys: bson.D{
-		// 		{Key: "author_id", Value: 1},
-		// 		{Key: "created_at", Value: -1},
-		// 	},
-		// 	Options: options.Index().
-		// 		SetName("page_author_created_at"),
-		// },
+		{
+			Keys: bson.D{
+				{Key: "author_id", Value: 1},
+				{Key: "created_at", Value: -1},
+			},
+			Options: options.Index().
+				SetName("page_author_created_at"),
+		},
 	}
 
 	_, err := collection.Indexes().CreateMany(ctx, indexes)

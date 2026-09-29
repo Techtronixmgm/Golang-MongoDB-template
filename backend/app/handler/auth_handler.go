@@ -16,15 +16,18 @@ import (
 
 type AuthHandler struct {
 	authService *services.AuthService
+	userService *services.UserService
 	config      config.Config
 }
 
 func NewAuthHandler(
 	authService *services.AuthService,
+	userService *services.UserService,
 	cfg config.Config,
 ) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
+		userService: userService,
 		config:      cfg,
 	}
 }
@@ -317,5 +320,123 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "logout successful",
+	})
+}
+
+func (h *AuthHandler) StartTwoFactorSetup(c *gin.Context) {
+	userIDValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || strings.TrimSpace(userID) == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	secret, err := h.userService.StartTwoFactorSetup(
+		c.Request.Context(),
+		userID,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrInvalidUserID):
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "unauthorized",
+			})
+
+		case errors.Is(err, services.ErrInvalidCredentials):
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "unauthorized",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to start two-factor setup",
+			})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "two-factor authentication setup started",
+		"secret":  secret,
+	})
+}
+
+func (h *AuthHandler) VerifyTwoFactorSetup(c *gin.Context) {
+	userIDValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || strings.TrimSpace(userID) == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	var req struct {
+		Code string `json:"code" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "TOTP code is required",
+		})
+		return
+	}
+
+	err := h.userService.VerifyTwoFactorSetup(
+		c.Request.Context(),
+		userID,
+		req.Code,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrTwoFactorSetupNotStarted):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+
+		case errors.Is(err, services.ErrInvalidTOTPCode):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid TOTP code",
+			})
+
+		case errors.Is(err, services.ErrInvalidUserID):
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "unauthorized",
+			})
+
+		case errors.Is(err, services.ErrInvalidCredentials):
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "unauthorized",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to verify two-factor setup",
+			})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":          "two-factor authentication enabled",
+		"twoFactorEnabled": true,
 	})
 }

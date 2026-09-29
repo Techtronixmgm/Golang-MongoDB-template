@@ -32,6 +32,7 @@ func (h *SettingsHandler) GetPublicSettings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dto.PublicSettingsResponse{
 		RegistrationEnabled: settings.RegistrationEnabled,
+		TwoFactorEnabled:    settings.TwoFactorEnabled,
 	})
 }
 
@@ -45,7 +46,8 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if req.RegistrationEnabled == nil {
+	if req.RegistrationEnabled == nil &&
+		req.TwoFactorEnabled == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "no settings to update",
 		})
@@ -54,16 +56,30 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 
 	actorID := c.GetString("userID")
 
-	err := h.settingsService.UpdateRegistrationEnabled(
-		c.Request.Context(),
-		*req.RegistrationEnabled,
-		actorID,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to update settings",
-		})
-		return
+	if req.RegistrationEnabled != nil {
+		if err := h.settingsService.UpdateRegistrationEnabled(
+			c.Request.Context(),
+			*req.RegistrationEnabled,
+			actorID,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to update registration setting",
+			})
+			return
+		}
+	}
+
+	if req.TwoFactorEnabled != nil {
+		if err := h.settingsService.UpdateTwoFactorEnabled(
+			c.Request.Context(),
+			*req.TwoFactorEnabled,
+			actorID,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to update two-factor setting",
+			})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

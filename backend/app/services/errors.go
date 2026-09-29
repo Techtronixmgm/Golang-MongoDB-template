@@ -34,4 +34,8 @@ var (
 	ErrInvalidVisibility  = errors.New("invalid page visibility")
 	ErrInvalidSlug        = errors.New("invalid slug")
 	ErrSlugAlreadyExists  = errors.New("slug already exists")
+
+	// TOTP/2FA
+	ErrInvalidTOTPCode          = errors.New("invalid TOTP code")
+	ErrTwoFactorSetupNotStarted = errors.New("two-factor setup has not been started")
 )

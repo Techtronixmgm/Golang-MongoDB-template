@@ -134,8 +134,9 @@ func NewRouter(
 	// Services / handlers
 	// ------------------------------------------------------------------
 
-	userService := services.NewUserService(userRepository)
-	authHandler := handler.NewAuthHandler(authService, cfg)
+	totpService := services.NewTOTPService()
+	userService := services.NewUserService(userRepository, totpService)
+	authHandler := handler.NewAuthHandler(authService, userService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
 	pageRepository := mongorepo.NewPageRepository(database)
@@ -199,6 +200,10 @@ func NewRouter(
 		protected.PATCH("/me", userHandler.UpdateProfile)
 		protected.PATCH("/me/image", userHandler.UpdateProfilePic)
 		protected.GET("/me", userHandler.Me)
+
+		// 2FA srtup
+		protected.POST("/2fa/setup", authHandler.StartTwoFactorSetup)
+		protected.POST("/2fa/verify-setup", authHandler.VerifyTwoFactorSetup)
 	}
 
 	// ------------------------------------------------------------------

@@ -39,6 +39,11 @@ type User struct {
 	City         string `bson:"city" json:"city"`
 	State        string `bson:"state" json:"state"`
 	PinCode      string `bson:"pin_code" json:"pinCode"`
+
+	TwoFactorEnabled       bool     `bson:"two_factor_enabled" json:"twoFactorEnabled"`
+	TwoFactorSecret        string   `bson:"two_factor_secret" json:"-"`
+	TwoFactorPendingSecret string   `bson:"two_factor_pending_secret" json:"-"`
+	BackupCodeHashes       []string `bson:"backup_code_hashes" json:"-"`
 }
 
 func NewCustomerUser() User {
