@@ -48,7 +48,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"identifier\": \"johnf\",\n  \"password\": \"Password@123\"\n}",
+              "raw": "{\n  \"identifier\": \"rameshsharma\",\n  \"password\": \"Password@123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -234,13 +234,13 @@
           "response": []
         },
         {
-          "name": "Refresh token",
+          "name": "Start setup 2FA",
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"identifier\": \"suresh12\",\n  \"password\": \"Password@123\"\n}",
+              "raw": "",
               "options": {
                 "raw": {
                   "language": "json"
@@ -248,7 +248,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:{{port}}/api/v1/auth/refresh",
+              "raw": "http://localhost:{{port}}/api/v1/auth/2fa/setup",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -258,7 +258,137 @@
                 "api",
                 "v1",
                 "auth",
-                "refresh"
+                "2fa",
+                "setup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify setup 2FA",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"658856\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/auth/2fa/verify-setup",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "2fa",
+                "verify-setup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Disable 2FA",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"158898\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/auth/2fa/disable",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "2fa",
+                "disable"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Regenerate backup codes",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"455282\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/auth/2fa/backup-codes/regenerate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "2fa",
+                "backup-codes",
+                "regenerate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login verify 2FA",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeToken\": \"\",\n  \"code\": \"684616\"\n}\n\n// {\n//   \"challengeToken\": \"YOUR_CHALLENGE_TOKEN\",\n//   \"code\": \"123456\"\n// }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/auth/2fa/verify-login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "2fa",
+                "verify-login"
               ]
             }
           },
@@ -279,7 +409,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Ramesh\",\n  \"lastName\": \"Sharma\",\n  \"username\": \"ramesh\",\n  \"email\": \"ramesh@example.com\",\n  \"altEmail\": \"ramesh.alt@example.com\",\n  \"phone\": \"6952365445\",\n  \"password\": \"Password@123\"\n}",
+                  "raw": "// {\n//   \"firstName\": \"Rahul\",\n//   \"lastName\": \"Sharma\",\n//   \"username\": \"rahulsharma\",\n//   \"email\": \"rahul@example.com\",\n//   \"altEmail\": \"rahul.personal@example.com\",\n//   \"phone\": \"9876543210\",\n//   \"password\": \"Password@123\"\n// }\n\n{\n  \"firstName\": \"Sweta\",\n  \"lastName\": \"Tiwari\",\n  \"username\": \"sweta\",\n  \"email\": \"sweta@example.com\",\n//   \"altEmail\": \"ramesh.alt@example.com\",\n  \"phone\": \"6952655445\",\n  \"password\": \"Password@123\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -357,7 +487,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/customers?search=6545859575",
+                  "raw": "http://localhost:{{port}}/api/v1/customers?search=ramesh",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -371,7 +501,7 @@
                   "query": [
                     {
                       "key": "search",
-                      "value": "6545859575"
+                      "value": "ramesh"
                     }
                   ]
                 }
@@ -393,7 +523,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/customers/6aacc9f29bc6df245254ccbc/status",
+                  "raw": "http://localhost:{{port}}/api/v1/customers/6aa2d2bb102f1f260ac1d5a0/status",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -403,8 +533,41 @@
                     "api",
                     "v1",
                     "customers",
-                    "6aacc9f29bc6df245254ccbc",
+                    "6aa2d2bb102f1f260ac1d5a0",
                     "status"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reset 2FA for customer",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/customers/6abccfa0290c23a6e22544bb/2fa/reset",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "customers",
+                    "6abccfa0290c23a6e22544bb",
+                    "2fa",
+                    "reset"
                   ]
                 }
               },
@@ -417,7 +580,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"new_password\": \"sadsad\"\n}",
+                  "raw": "{\n  \"new_password\": \"Cat@1234\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -425,7 +588,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/customers/6aacc9f29bc6df245254ccbc/password",
+                  "raw": "http://localhost:{{port}}/api/v1/customers/6aacd6c40c86884d2b54e5fa/password",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -435,7 +598,7 @@
                     "api",
                     "v1",
                     "customers",
-                    "6aacc9f29bc6df245254ccbc",
+                    "6aacd6c40c86884d2b54e5fa",
                     "password"
                   ]
                 }
@@ -482,13 +645,47 @@
           "name": "Settings",
           "item": [
             {
-              "name": "public user registration on/off",
+              "name": "Global Settings on/off",
               "request": {
                 "method": "PATCH",
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"registration_enabled\" : true\n}",
+                  "raw": "{\n    // \"registration_enabled\" : true,\n    \"two_factor_enabled\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/settings",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "settings"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get global settings",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"registration_enabled\" : true,\n    \"two_factor_enabled\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -665,6 +862,175 @@
               "response": []
             }
           ]
+        },
+        {
+          "name": "Menus",
+          "item": [
+            {
+              "name": "Create menu",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "//works only once to initialize\n\n{\n  \"name\": \"Bottom Menu\",\n  \"location\": \"bottom\", // top,bottom,left\n  \"status\": true,\n  \"items\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "menus"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Menus",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "//works only once to initialize\n\n{\n  \"name\": \"Bottom Menu\",\n  \"location\": \"bottom\", // top,bottom,left\n  \"status\": true,\n  \"items\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "menus"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Menu by ID",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "//works only once to initialize\n\n{\n  \"name\": \"Bottom Menu\",\n  \"location\": \"bottom\", // top,bottom,left\n  \"status\": true,\n  \"items\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6aba9b425dbbc2b3737071ed",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "menus",
+                    "6aba9b425dbbc2b3737071ed"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Menu by ID",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "//works only once to initialize\n\n// {\n//   \"name\": \"Bottom Menu\",\n//   \"location\": \"bottom\", // top,bottom,left\n//   \"status\": true\n//   \"items\": []\n// }\n\n// {\n//   \"items\": [\n//     {\n//       \"label\": \"Home\",\n//       \"type\": \"url\",\n//       \"url\": \"/\",\n//       \"order\": 1,\n//       \"displayStatus\": true,\n//       \"children\": []\n//     },\n//     {\n//       \"label\": \"Products\",\n//       \"type\": \"group\",\n//       \"order\": 2,\n//       \"displayStatus\": true,\n//       \"children\": [\n//         {\n//           \"label\": \"Electronics\",\n//           \"type\": \"url\",\n//           \"url\": \"/electronics\",\n//           \"order\": 1,\n//           \"displayStatus\": true,\n//           \"children\": []\n//         },\n//         {\n//           \"label\": \"Clothing\",\n//           \"type\": \"url\",\n//           \"url\": \"/clothing\",\n//           \"order\": 2,\n//           \"displayStatus\": true,\n//           \"children\": []\n//         }\n//       ]\n//     },\n//     {\n//       \"label\": \"About\",\n//       \"type\": \"url\",\n//       \"url\": \"/about-us\",\n//       \"order\": 3,\n//       \"displayStatus\": true,\n//       \"children\": []\n//     },\n//     {\n//       \"label\": \"Contact\",\n//       \"type\": \"url\",\n//       \"url\": \"/contact\",\n//       \"order\": 4,\n//       \"displayStatus\": true,\n//       \"children\": []\n//     }\n//   ]\n// }\n\n{\n    \"items\": [\n        {\n     \"label\": \"About\",\n      \"type\": \"page\",\n      \"pageId\": \"6aba3a1ce75925b3aec7e6c6\",\n      \"order\": 3,\n      \"displayStatus\": true,\n      \"children\": []\n        }\n    ]\n}\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6aba9aef5dbbc2b3737071eb",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "menus",
+                    "6aba9aef5dbbc2b3737071eb"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Menu by ID",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "//works only once to initialize\n\n{\n  \"name\": \"Bottom Menu\",\n  \"location\": \"bottom\", // top,bottom,left\n  \"status\": true,\n  \"items\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6aba9b425dbbc2b3737071ed",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "menus",
+                    "6aba9b425dbbc2b3737071ed"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },
@@ -672,10 +1038,57 @@
       "name": "Public links",
       "item": [
         {
+          "name": "CORS check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "OPTIONS",
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://localhost:3000",
+                "type": "text"
+              },
+              {
+                "key": "Access-Control-Request-Method",
+                "value": "POST",
+                "type": "text"
+              },
+              {
+                "key": "Access-Control-Request-Headers",
+                "value": "content-type",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:4000/api/v1/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "4000",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "health",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Origin",
+                "value": "http://localhost:3000",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "http://localhost:{{port}}/health",
               "protocol": "http",
@@ -685,6 +1098,25 @@
               "port": "{{port}}",
               "path": [
                 "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:{{port}}/ready",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "ready"
               ]
             }
           },
@@ -735,6 +1167,66 @@
                 "v1",
                 "pages",
                 "about-uss"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get menu by location",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "// {\n//   \"title\": \"About Us\",\n//   \"content\": \"About Us page\",\n//   \"visibility\" : \"public\"/\"registered\"\n// }\n\nhttp://localhost:{{port}}/api/v1/menus/bottom\nhttp://localhost:{{port}}/api/v1/menus/top\nhttp://localhost:{{port}}/api/v1/menus/left"
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/menus/left",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "menus",
+                "left"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"suresh12\",\n  \"password\": \"Password@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/auth/refresh",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
               ]
             }
           },
