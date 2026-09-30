@@ -3,6 +3,7 @@ package router
 import (
 	"basic-app/auth"
 	"basic-app/config"
+	"basic-app/middleware"
 
 	"basic-app/handler"
 	mongorepo "basic-app/repository/mongo"
@@ -196,11 +197,52 @@ func NewRouter(
 
 	authRoutes := r.Group("/api/v1/auth")
 	{
+		// Rate limiter config
+
+		loginLimiter := middleware.NewRateLimiter(
+			5,
+			time.Minute,
+		)
+
+		registerLimiter := middleware.NewRateLimiter(
+			5,
+			time.Minute,
+		)
+
+		refreshLimiter := middleware.NewRateLimiter(
+			10,
+			time.Minute,
+		)
+
+		twoFactorLimiter := middleware.NewRateLimiter(
+			5,
+			time.Minute,
+		)
+
 		// Public
-		authRoutes.POST("/register", authHandler.Register)
-		authRoutes.POST("/login", authHandler.Login)
-		authRoutes.POST("/refresh", authHandler.Refresh)
-		authRoutes.POST("/2fa/verify-login", authHandler.VerifyTwoFactorLogin)
+		authRoutes.POST(
+			"/register",
+			registerLimiter.Middleware(middleware.RateLimitKeyByIP),
+			authHandler.Register,
+		)
+
+		authRoutes.POST(
+			"/login",
+			loginLimiter.Middleware(middleware.RateLimitKeyByIP),
+			authHandler.Login,
+		)
+
+		authRoutes.POST(
+			"/refresh",
+			refreshLimiter.Middleware(middleware.RateLimitKeyByIP),
+			authHandler.Refresh,
+		)
+
+		authRoutes.POST(
+			"/2fa/verify-login",
+			twoFactorLimiter.Middleware(middleware.RateLimitKeyByIP),
+			authHandler.VerifyTwoFactorLogin,
+		)
 
 		// Authenticated
 		protected := authRoutes.Group("")
@@ -212,11 +254,30 @@ func NewRouter(
 		protected.PATCH("/me/image", userHandler.UpdateProfilePic)
 		protected.GET("/me", userHandler.Me)
 
-		// 2FA srtup
-		protected.POST("/2fa/setup", authHandler.StartTwoFactorSetup)
-		protected.POST("/2fa/verify-setup", authHandler.VerifyTwoFactorSetup)
-		protected.POST("/2fa/disable", authHandler.DisableTwoFactor)
-		protected.POST("/2fa/backup-codes/regenerate", authHandler.RegenerateBackupCodes)
+		// 2FA setup
+		protected.POST(
+			"/2fa/setup",
+			twoFactorLimiter.Middleware(middleware.RateLimitKeyByUserID),
+			authHandler.StartTwoFactorSetup,
+		)
+
+		protected.POST(
+			"/2fa/verify-setup",
+			twoFactorLimiter.Middleware(middleware.RateLimitKeyByUserID),
+			authHandler.VerifyTwoFactorSetup,
+		)
+
+		protected.POST(
+			"/2fa/disable",
+			twoFactorLimiter.Middleware(middleware.RateLimitKeyByUserID),
+			authHandler.DisableTwoFactor,
+		)
+
+		protected.POST(
+			"/2fa/backup-codes/regenerate",
+			twoFactorLimiter.Middleware(middleware.RateLimitKeyByUserID),
+			authHandler.RegenerateBackupCodes,
+		)
 	}
 
 	// ------------------------------------------------------------------
