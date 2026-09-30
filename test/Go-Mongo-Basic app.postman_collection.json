@@ -48,7 +48,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"identifier\": \"rameshsharma\",\n  \"password\": \"Password@123\"\n}",
+              "raw": "{\n  \"identifier\": \"johnf\",\n  \"password\": \"Password@123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -651,7 +651,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    // \"registration_enabled\" : true,\n    \"two_factor_enabled\": false\n}",
+                  "raw": "// {\n//     \"registration_enabled\" : true,\n//     \"two_factor_enabled\": false,\n//     \"login_with_primary_email\": true,\n//   \"login_with_username\": true,\n//   \"login_with_phone\": false,\n//   \"login_with_alt_email\": false\n// }\n\n{\n   \"login_with_username\": true\n}",
                   "options": {
                     "raw": {
                       "language": "json"

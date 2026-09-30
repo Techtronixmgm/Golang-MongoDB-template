@@ -108,6 +108,22 @@
 
 `.env.example`
 
+
+### Login Identifier Settings
+
+Administrators can control which identifiers users are allowed to use when signing in.
+
+Available options:
+
+- **Primary Email** — Allow users to log in using their primary email address.
+- **Username** — Allow users to log in using their username.
+- **Phone Number** — Allow users to log in using their registered 10-digit phone number.
+- **Alternate Email** — Allow users to log in using their alternate email address.
+
+At least **one login identifier must remain enabled** at all times. Disabling an identifier prevents users from signing in with that identifier but does not affect the user's stored account information.
+
+These settings apply globally to user login.
+
 ### .env
 
 ```
