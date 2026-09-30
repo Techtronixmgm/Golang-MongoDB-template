@@ -613,3 +613,49 @@ func (h *AuthHandler) RegenerateBackupCodes(c *gin.Context) {
 		"backupCodesLow":       len(backupCodes) <= h.config.BackupCodeLowThreshold,
 	})
 }
+
+func (h *AuthHandler) AdminResetTwoFactor(c *gin.Context) {
+	userID := strings.TrimSpace(c.Param("id"))
+
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "user ID is required",
+		})
+		return
+	}
+
+	err := h.userService.ResetTwoFactor(
+		c.Request.Context(),
+		userID,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrInvalidUserID):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid user ID",
+			})
+
+		case errors.Is(err, services.ErrTwoFactorNotEnabled):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "two-factor authentication is not enabled",
+			})
+
+		case errors.Is(err, services.ErrTwoFactorResetNotAllowed):
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "two-factor authentication cannot be reset for admin accounts",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to reset two-factor authentication",
+			})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":          "two-factor authentication reset successfully",
+		"twoFactorEnabled": false,
+	})
+}

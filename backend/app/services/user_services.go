@@ -947,3 +947,30 @@ func (s *UserService) RegenerateBackupCodes(
 
 	return backupCodes, nil
 }
+
+func (s *UserService) ResetTwoFactor(
+	ctx context.Context,
+	userID string,
+) error {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if user.Role == models.RoleAdmin {
+		return ErrTwoFactorResetNotAllowed
+	}
+
+	user.TwoFactorEnabled = false
+	user.TwoFactorSecret = ""
+	user.TwoFactorPendingSecret = ""
+	user.BackupCodeHashes = nil
+
+	return s.userRepository.Update(ctx, user)
+}

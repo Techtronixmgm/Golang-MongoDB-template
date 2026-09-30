@@ -254,3 +254,24 @@ The following 2FA behavior has been tested:
 - The challenge token cannot be used as a normal access token.
 - The encryption key must be supplied through server configuration and must not be committed to source control.
 - `otpauthUrl` and TOTP secrets must not be logged.
+
+## Backup Codes
+
+Backup codes help you access your account if you can't use your authenticator app.
+
+- You’ll receive **12 backup codes**.
+- Each code can be used **only once**.
+- Store them somewhere safe and private.
+- Generating a new set will **invalidate all previous backup codes**.
+- You won’t be able to view these codes again after leaving this page.
+
+> **Keep your backup codes secure. Do not share them with anyone.**
+
+## Admin 2FA Reset
+
+Administrators can reset 2FA for non-admin users who have lost access to their authenticator.
+
+- Resets the user's current 2FA configuration.
+- Invalidates all existing backup codes.
+- The user can set up 2FA again after the reset.
+- Admin accounts cannot be reset through this endpoint.

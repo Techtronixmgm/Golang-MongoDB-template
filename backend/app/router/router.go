@@ -253,7 +253,7 @@ func NewRouter(
 	customerRoutes.PATCH("/:id", userHandler.UpdateCustomer)
 	customerRoutes.PATCH("/:id/status", userHandler.UpdateUserStatus)
 	customerRoutes.PATCH("/:id/password", userHandler.ChangeUserPassword)
-
+	customerRoutes.POST("/:id/2fa/reset", authHandler.AdminResetTwoFactor)
 	// ------------------------------------------------------------------
 	// Application settings
 	// ------------------------------------------------------------------
