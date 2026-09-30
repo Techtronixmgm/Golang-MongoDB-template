@@ -33,14 +33,32 @@ type LoginRequest struct {
 }
 
 type LoginResult struct {
-	User          *models.User
-	AccessToken   string
-	RefreshToken  string
-	RefreshExpiry time.Time
+	User              *models.User
+	AccessToken       string
+	RefreshToken      string
+	RefreshExpiry     time.Time
+	TwoFactorRequired bool
+	ChallengeToken    string
+
+	BackupCodesRemaining int
+	BackupCodesLow       bool
 }
 
 type RefreshResult struct {
 	AccessToken   string
 	RefreshToken  string
 	RefreshExpiry time.Time
+}
+
+type VerifyTwoFactorLoginRequest struct {
+	ChallengeToken string `json:"challengeToken"`
+	Code           string `json:"code"`
+}
+
+type DisableTwoFactorRequest struct {
+	Code string `json:"code"`
+}
+
+type RegenerateBackupCodesRequest struct {
+	Code string `json:"code"`
 }

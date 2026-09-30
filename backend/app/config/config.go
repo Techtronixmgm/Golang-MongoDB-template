@@ -10,6 +10,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var (
+	ErrTOTPEncryptionKeyMissing = errors.New("TOTP encryption key is required to enable 2FA")
+	ErrTOTPEncryptionKeyTooWeak = errors.New("TOTP encryption key must be at least 32 bytes")
+)
+
 type Config struct {
 	MongoUri               string
 	MongoDB                string
@@ -25,8 +30,12 @@ type Config struct {
 	GinMode                          string
 	RefreshTokenRevokedRetentionDays int
 
-	CookieSameSite string
-	AllowedOrigins []string
+	CookieSameSite         string
+	AllowedOrigins         []string
+	TOTPIssuer             string
+	TOTPEncryptionKey      string
+	BackupCodeCount        int
+	BackupCodeLowThreshold int
 }
 
 func Load() (Config, error) {
@@ -195,6 +204,55 @@ func Load() (Config, error) {
 		}
 	}
 
+	tOTPIssuer, err := extractEnv("TOTP_ISSUER")
+	if err != nil {
+		return Config{}, err
+	}
+
+	// TOTP encryption key is intentionally optional at startup.
+	// It is required only when 2FA is enabled or used.
+	tOTPEncryptionKey := strings.TrimSpace(
+		os.Getenv("TOTP_ENCRYPTION_KEY"),
+	)
+
+	// Backup code settings.
+	// Defaults:
+	//   BACKUP_CODE_COUNT=10
+	//   BACKUP_CODE_LOW_THRESHOLD=4
+	backupCodeCount := 10
+
+	backupCodeCountStr := strings.TrimSpace(
+		os.Getenv("BACKUP_CODE_COUNT"),
+	)
+
+	if backupCodeCountStr != "" {
+		backupCodeCount, err = strconv.Atoi(backupCodeCountStr)
+		if err != nil {
+			return Config{}, fmt.Errorf(
+				"invalid BACKUP_CODE_COUNT: %w",
+				err,
+			)
+		}
+	}
+
+	backupCodeLowThreshold := 4
+
+	backupCodeLowThresholdStr := strings.TrimSpace(
+		os.Getenv("BACKUP_CODE_LOW_THRESHOLD"),
+	)
+
+	if backupCodeLowThresholdStr != "" {
+		backupCodeLowThreshold, err = strconv.Atoi(
+			backupCodeLowThresholdStr,
+		)
+		if err != nil {
+			return Config{}, fmt.Errorf(
+				"invalid BACKUP_CODE_LOW_THRESHOLD: %w",
+				err,
+			)
+		}
+	}
+
 	config := Config{
 		MongoUri:                         mongoURI,
 		MongoDB:                          mongoDB,
@@ -209,6 +267,10 @@ func Load() (Config, error) {
 		RefreshTokenRevokedRetentionDays: refreshTokenRevokedRetentionDays,
 		CookieSameSite:                   cookieSameSite,
 		AllowedOrigins:                   allowedOrigins,
+		TOTPIssuer:                       tOTPIssuer,
+		TOTPEncryptionKey:                tOTPEncryptionKey,
+		BackupCodeCount:                  backupCodeCount,
+		BackupCodeLowThreshold:           backupCodeLowThreshold,
 	}
 
 	if err := config.Validate(); err != nil {
@@ -305,6 +367,10 @@ func (c Config) Validate() error {
 		}
 	}
 
+	if strings.TrimSpace(c.TOTPIssuer) == "" {
+		return errors.New("TOTP issuer is required")
+	}
+
 	return nil
 }
 
@@ -319,4 +385,37 @@ func extractEnv(key string) (string, error) {
 	}
 
 	return val, nil
+}
+
+// ValidateTOTPEncryptionKey validates the encryption secret
+// before 2FA is enabled or used.
+
+func (c Config) ValidateTOTPEncryptionKey() error {
+	key := strings.TrimSpace(c.TOTPEncryptionKey)
+
+	if key == "" {
+		return ErrTOTPEncryptionKeyMissing
+	}
+
+	if len([]byte(key)) < 32 {
+		return ErrTOTPEncryptionKeyTooWeak
+	}
+
+	return nil
+}
+
+func (c Config) ValidateBackupCodeConfig() error {
+	if c.BackupCodeLowThreshold < 4 {
+		return errors.New(
+			"backup code low threshold must be at least 4",
+		)
+	}
+
+	if c.BackupCodeCount < c.BackupCodeLowThreshold+4 {
+		return errors.New(
+			"backup code count must be at least 4 greater than backup code low threshold",
+		)
+	}
+
+	return nil
 }

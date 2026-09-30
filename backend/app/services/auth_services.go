@@ -3,6 +3,7 @@ package services
 import (
 	"basic-app/auth"
 	"basic-app/config"
+
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/repository"
@@ -20,6 +21,8 @@ type AuthService struct {
 	userRepository         repository.UserRepository
 	refreshTokenRepository repository.RefreshTokenRepository
 	settingsService        *SettingsService
+	totpService            *TOTPService
+	totpEncryptionService  *TOTPEncryptionService
 	config                 config.Config
 }
 
@@ -27,12 +30,16 @@ func NewAuthService(
 	userRepository repository.UserRepository,
 	refreshTokenRepository repository.RefreshTokenRepository,
 	settingsService *SettingsService,
+	totpService *TOTPService,
+	totpEncryptionService *TOTPEncryptionService,
 	cfg config.Config,
 ) *AuthService {
 	return &AuthService{
 		userRepository:         userRepository,
 		refreshTokenRepository: refreshTokenRepository,
 		settingsService:        settingsService,
+		totpService:            totpService,
+		totpEncryptionService:  totpEncryptionService,
 		config:                 cfg,
 	}
 }
@@ -255,6 +262,29 @@ func (s *AuthService) Login(
 		return nil, ErrInvalidCredentials
 	}
 
+	twoFactorEnabled, err := s.settingsService.IsTwoFactorEnabled(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if twoFactorEnabled && user.TwoFactorEnabled {
+		challengeToken, err := auth.GenerateTwoFactorChallenge(
+			user.ID.Hex(),
+			s.config.JWTSecret,
+			5,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return &dto.LoginResult{
+			User:              user,
+			TwoFactorRequired: true,
+			ChallengeToken:    challengeToken,
+		}, nil
+	}
+
 	accessToken, err := auth.GenerateToken(
 		user.ID.Hex(),
 		string(user.Role),
@@ -285,6 +315,15 @@ func (s *AuthService) Login(
 	}
 
 	now := time.Now().UTC()
+
+	if err := s.userRepository.UpdateLastLoginAt(
+		ctx,
+		user.ID.Hex(),
+		now,
+	); err != nil {
+		return nil, err
+	}
+
 	user.LastLoginAt = &now
 
 	return &dto.LoginResult{
@@ -357,4 +396,157 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	}
 
 	return s.refreshTokenRepository.Revoke(ctx, storedToken.ID.Hex())
+}
+
+func (s *AuthService) VerifyTwoFactorLogin(
+	ctx context.Context,
+	req *dto.VerifyTwoFactorLoginRequest,
+) (*dto.LoginResult, error) {
+	challenge := strings.TrimSpace(req.ChallengeToken)
+	code := strings.TrimSpace(req.Code)
+
+	if challenge == "" || code == "" {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	claims, err := auth.ValidateTwoFactorChallenge(
+		challenge,
+		s.config.JWTSecret,
+	)
+	if err != nil {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	user, err := s.userRepository.FindByID(
+		ctx,
+		claims.UserID,
+	)
+	if err != nil {
+		if errors.Is(err, ErrUserNotFound) {
+			return nil, ErrInvalidCredentials
+		}
+
+		return nil, err
+	}
+
+	if !user.Status || !user.TwoFactorEnabled {
+		return nil, ErrInvalidCredentials
+	}
+
+	backupCodesRemaining := len(user.BackupCodeHashes)
+	backupCodesLow := backupCodesRemaining <= s.config.BackupCodeLowThreshold
+
+	if len(code) == 6 {
+		decryptedSecret, err := s.totpEncryptionService.Decrypt(
+			user.TwoFactorSecret,
+		)
+		if err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+
+		if err := s.totpService.VerifyCode(
+			decryptedSecret,
+			code,
+		); err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+	} else {
+		backupCodesRemaining, err = s.verifyBackupCode(
+			ctx,
+			user,
+			code,
+		)
+		if err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+
+		backupCodesLow = backupCodesRemaining <= 4
+	}
+
+	accessToken, err := auth.GenerateToken(
+		user.ID.Hex(),
+		string(user.Role),
+		s.config.JWTSecret,
+		s.config.JWTExpiryHours,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, refreshExpiry, err := auth.GenerateRefreshToken(
+		user.ID.Hex(),
+		s.config.JWTSecret,
+		s.config.RefreshTokenExpiryDays,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshTokenModel := &models.RefreshToken{
+		UserID:    user.ID,
+		TokenHash: auth.HashRefreshToken(refreshToken),
+		ExpiresAt: refreshExpiry,
+	}
+
+	if err := s.refreshTokenRepository.Create(
+		ctx,
+		refreshTokenModel,
+	); err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+
+	if err := s.userRepository.UpdateLastLoginAt(
+		ctx,
+		user.ID.Hex(),
+		now,
+	); err != nil {
+		return nil, err
+	}
+
+	user.LastLoginAt = &now
+
+	return &dto.LoginResult{
+		User:                 user,
+		AccessToken:          accessToken,
+		RefreshToken:         refreshToken,
+		RefreshExpiry:        refreshExpiry,
+		BackupCodesRemaining: backupCodesRemaining,
+		BackupCodesLow:       backupCodesLow,
+	}, nil
+}
+
+func (s *AuthService) verifyBackupCode(
+	ctx context.Context,
+	user *models.User,
+	code string,
+) (int, error) {
+	code = strings.ToUpper(strings.TrimSpace(code))
+
+	if code == "" {
+		return 0, ErrInvalidBackupCode
+	}
+
+	for index, hash := range user.BackupCodeHashes {
+		if err := bcrypt.CompareHashAndPassword(
+			[]byte(hash),
+			[]byte(code),
+		); err != nil {
+			continue
+		}
+
+		user.BackupCodeHashes = append(
+			user.BackupCodeHashes[:index],
+			user.BackupCodeHashes[index+1:]...,
+		)
+
+		if err := s.userRepository.Update(ctx, user); err != nil {
+			return 0, err
+		}
+
+		return len(user.BackupCodeHashes), nil
+	}
+
+	return 0, ErrInvalidBackupCode
 }

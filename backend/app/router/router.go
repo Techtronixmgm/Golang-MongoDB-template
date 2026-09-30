@@ -3,6 +3,7 @@ package router
 import (
 	"basic-app/auth"
 	"basic-app/config"
+
 	"basic-app/handler"
 	mongorepo "basic-app/repository/mongo"
 	"basic-app/services"
@@ -64,17 +65,26 @@ func NewRouter(
 	// Dependencies
 	// ------------------------------------------------------------------
 
+	totpEncryptionService, err := services.NewTOTPEncryptionService(
+		cfg.TOTPEncryptionKey,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	userRepository := mongorepo.NewUserRepository(database)
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
-	settingsService := services.NewSettingsService(settingsRepository)
-
+	settingsService := services.NewSettingsService(settingsRepository, cfg)
+	totpService := services.NewTOTPService(cfg.TOTPIssuer)
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(database)
 
 	authService := services.NewAuthService(
 		userRepository,
 		refreshTokenRepository,
 		settingsService,
+		totpService,
+		totpEncryptionService,
 		cfg,
 	)
 
@@ -135,8 +145,8 @@ func NewRouter(
 	// Services / handlers
 	// ------------------------------------------------------------------
 
-	userService := services.NewUserService(userRepository)
-	authHandler := handler.NewAuthHandler(authService, cfg)
+	userService := services.NewUserService(userRepository, totpService, totpEncryptionService, cfg)
+	authHandler := handler.NewAuthHandler(authService, userService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
 	pageRepository := mongorepo.NewPageRepository(database)
@@ -190,6 +200,7 @@ func NewRouter(
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
 		authRoutes.POST("/refresh", authHandler.Refresh)
+		authRoutes.POST("/2fa/verify-login", authHandler.VerifyTwoFactorLogin)
 
 		// Authenticated
 		protected := authRoutes.Group("")
@@ -200,6 +211,12 @@ func NewRouter(
 		protected.PATCH("/me", userHandler.UpdateProfile)
 		protected.PATCH("/me/image", userHandler.UpdateProfilePic)
 		protected.GET("/me", userHandler.Me)
+
+		// 2FA srtup
+		protected.POST("/2fa/setup", authHandler.StartTwoFactorSetup)
+		protected.POST("/2fa/verify-setup", authHandler.VerifyTwoFactorSetup)
+		protected.POST("/2fa/disable", authHandler.DisableTwoFactor)
+		protected.POST("/2fa/backup-codes/regenerate", authHandler.RegenerateBackupCodes)
 	}
 
 	// ------------------------------------------------------------------
@@ -237,7 +254,7 @@ func NewRouter(
 	customerRoutes.PATCH("/:id", userHandler.UpdateCustomer)
 	customerRoutes.PATCH("/:id/status", userHandler.UpdateUserStatus)
 	customerRoutes.PATCH("/:id/password", userHandler.ChangeUserPassword)
-
+	customerRoutes.POST("/:id/2fa/reset", authHandler.AdminResetTwoFactor)
 	// ------------------------------------------------------------------
 	// Application settings
 	// ------------------------------------------------------------------
@@ -250,6 +267,7 @@ func NewRouter(
 		auth.RequireRoles("admin"),
 	)
 	protectedSettings.PATCH("", settingsHandler.Update)
+	protectedSettings.GET("", settingsHandler.GetPrivateSettings)
 
 	// ------------------------------------------------------------------
 	// Pages

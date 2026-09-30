@@ -74,6 +74,7 @@ func GenerateRefreshToken(
 
 	return tokenString, expiresAt, nil
 }
+
 func ValidateToken(
 	tokenString string,
 	secret string,
@@ -126,6 +127,63 @@ func ValidateRefreshToken(
 
 	if !token.Valid || claims.Type != "refresh" {
 		return nil, errors.New("invalid refresh token")
+	}
+
+	return claims, nil
+}
+
+func GenerateTwoFactorChallenge(
+	userID string,
+	secret string,
+	expiryMinutes int,
+) (string, error) {
+	now := time.Now().UTC()
+
+	expiresAt := now.Add(
+		time.Duration(expiryMinutes) * time.Minute,
+	)
+
+	claims := TwoFactorClaims{
+		UserID: userID,
+		Type:   "2fa_challenge",
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+		},
+	}
+
+	token := jwt.NewWithClaims(
+		jwt.SigningMethodHS256,
+		claims,
+	)
+
+	return token.SignedString([]byte(secret))
+}
+
+func ValidateTwoFactorChallenge(
+	tokenString string,
+	secret string,
+) (*TwoFactorClaims, error) {
+	claims := &TwoFactorClaims{}
+
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		claims,
+		func(token *jwt.Token) (any, error) {
+			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, errors.New("invalid signing method")
+			}
+
+			return []byte(secret), nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid || claims.Type != "2fa_challenge" {
+		return nil, errors.New("invalid two-factor challenge")
 	}
 
 	return claims, nil

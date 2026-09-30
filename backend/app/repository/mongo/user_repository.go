@@ -160,6 +160,11 @@ func (r *UserRepository) Update(
 			"state":          user.State,
 			"pin_code":       user.PinCode,
 
+			"two_factor_enabled":        user.TwoFactorEnabled,
+			"two_factor_secret":         user.TwoFactorSecret,
+			"two_factor_pending_secret": user.TwoFactorPendingSecret,
+			"backup_code_hashes":        user.BackupCodeHashes,
+
 			"updated_at": user.UpdatedAt,
 		},
 	}
@@ -519,4 +524,37 @@ func (r *UserRepository) ListCustomers(
 	}
 
 	return customers, total, nil
+}
+
+func (r *UserRepository) UpdateLastLoginAt(
+	ctx context.Context,
+	userID string,
+	lastLoginAt time.Time,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, databaseTimeout)
+	defer cancel()
+
+	objectID, err := bson.ObjectIDFromHex(userID)
+	if err != nil {
+		return services.ErrInvalidUserID
+	}
+
+	result, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": objectID},
+		bson.M{
+			"$set": bson.M{
+				"last_login_at": lastLoginAt,
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return services.ErrUserNotFound
+	}
+
+	return nil
 }

@@ -54,6 +54,7 @@ func (r *ApplicationSettingsRepository) EnsureDefaults(ctx context.Context) erro
 		bson.M{
 			"$setOnInsert": bson.M{
 				"registration_enabled": true,
+				"two_factor_enabled":   false,
 				"updated_at":           now,
 				"updated_by":           "system",
 			},
@@ -77,6 +78,26 @@ func (r *ApplicationSettingsRepository) UpdateRegistrationEnabled(
 				"registration_enabled": enabled,
 				"updated_at":           time.Now().UTC(),
 				"updated_by":           updatedBy,
+			},
+		},
+	)
+
+	return err
+}
+
+func (r *ApplicationSettingsRepository) UpdateTwoFactorEnabled(
+	ctx context.Context,
+	enabled bool,
+	updatedBy string,
+) error {
+	_, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": models.ApplicationSettingsID},
+		bson.M{
+			"$set": bson.M{
+				"two_factor_enabled": enabled,
+				"updated_at":         time.Now().UTC(),
+				"updated_by":         updatedBy,
 			},
 		},
 	)

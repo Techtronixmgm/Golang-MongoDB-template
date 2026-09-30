@@ -6,6 +6,7 @@ import (
 	"basic-app/repository"
 	mongorepo "basic-app/repository/mongo"
 	"basic-app/router"
+	"basic-app/services"
 	"context"
 	"log"
 	"net/http"
@@ -53,6 +54,7 @@ func main() {
 	if err := mongorepo.EnsurePageIndexes(indexCtx, db); err != nil {
 		log.Fatal("failed to ensure page indexes:", err)
 	}
+
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(db)
 
 	cleanupCtx, cleanupCancel := context.WithCancel(context.Background())
@@ -68,6 +70,34 @@ func main() {
 		refreshTokenRepository,
 		cfg.RefreshTokenRevokedRetentionDays,
 	)
+
+	settingsRepository := mongorepo.NewApplicationSettingsRepository(db)
+
+	settingsService := services.NewSettingsService(
+		settingsRepository,
+		cfg,
+	)
+
+	settingsCtx, settingsCancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+	defer settingsCancel()
+
+	if err := settingsRepository.EnsureDefaults(settingsCtx); err != nil {
+		log.Printf("Failed to ensure application settings: %v", err)
+		return
+	}
+
+	if err := settingsService.ValidateTwoFactorStartupConfig(
+		settingsCtx,
+	); err != nil {
+		log.Printf(
+			"Two-factor startup validation failed: %v",
+			err,
+		)
+		return
+	}
 
 	gin.SetMode(cfg.GinMode)
 

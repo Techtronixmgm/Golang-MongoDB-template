@@ -34,4 +34,12 @@ var (
 	ErrInvalidVisibility  = errors.New("invalid page visibility")
 	ErrInvalidSlug        = errors.New("invalid slug")
 	ErrSlugAlreadyExists  = errors.New("slug already exists")
+
+	// TOTP/2FA
+	ErrInvalidTOTPCode          = errors.New("invalid TOTP code")
+	ErrTwoFactorSetupNotStarted = errors.New("two-factor setup has not been started")
+	ErrTwoFactorNotEnabled      = errors.New("two-factor authentication is not enabled")
+	ErrTwoFactorAlreadyEnabled  = errors.New("two-factor authentication is already enabled")
+	ErrInvalidBackupCode        = errors.New("invalid backup code")
+	ErrTwoFactorResetNotAllowed = errors.New("two-factor reset is not allowed for this user")
 )

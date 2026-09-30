@@ -11,24 +11,35 @@ import (
 
 	"github.com/google/uuid"
 
+	"basic-app/config"
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/repository"
 
+	"basic-app/utils"
 	"basic-app/validation"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
-	userRepository repository.UserRepository
+	userRepository        repository.UserRepository
+	totpService           *TOTPService
+	totpEncryptionService *TOTPEncryptionService
+	config                config.Config
 }
 
 func NewUserService(
 	userRepository repository.UserRepository,
+	totpService *TOTPService,
+	totpEncryptionService *TOTPEncryptionService,
+	cfg config.Config,
 ) *UserService {
 	return &UserService{
-		userRepository: userRepository,
+		userRepository:        userRepository,
+		totpService:           totpService,
+		totpEncryptionService: totpEncryptionService,
+		config:                cfg,
 	}
 }
 
@@ -641,4 +652,325 @@ func (s *UserService) ListCustomers(
 			TotalPages: totalPages,
 		},
 	}, nil
+}
+
+func (s *UserService) StartTwoFactorSetup(
+	ctx context.Context,
+	userID string,
+) (string, string, error) {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return "", "", ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return "", "", err
+	}
+
+	if !user.Status {
+		return "", "", ErrInvalidCredentials
+	}
+
+	if user.TwoFactorEnabled {
+		return "", "", ErrTwoFactorAlreadyEnabled
+	}
+
+	setup, err := s.totpService.GenerateSecret(user.Username)
+	if err != nil {
+		return "", "", err
+	}
+
+	encryptedSecret, err := s.totpEncryptionService.Encrypt(
+		setup.Secret,
+	)
+	if err != nil {
+		return "", "", err
+	}
+
+	user.TwoFactorPendingSecret = encryptedSecret
+
+	if err := s.userRepository.Update(ctx, user); err != nil {
+		return "", "", err
+	}
+
+	return setup.Secret, setup.OTPAuthURL, nil
+}
+
+func (s *UserService) VerifyTwoFactorSetup(
+	ctx context.Context,
+	userID string,
+	code string,
+) ([]string, error) {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return nil, ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.Status {
+		return nil, ErrInvalidCredentials
+	}
+
+	if user.TwoFactorEnabled {
+		return nil, ErrTwoFactorAlreadyEnabled
+	}
+
+	pendingSecret := strings.TrimSpace(
+		user.TwoFactorPendingSecret,
+	)
+
+	if pendingSecret == "" {
+		return nil, ErrTwoFactorSetupNotStarted
+	}
+
+	decryptedSecret, err := s.totpEncryptionService.Decrypt(
+		pendingSecret,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.totpService.VerifyCode(
+		decryptedSecret,
+		code,
+	); err != nil {
+		return nil, err
+	}
+
+	encryptedSecret, err := s.totpEncryptionService.Encrypt(
+		decryptedSecret,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	backupCodes, backupCodeHashes, err := utils.GenerateBackupCodes(
+		s.config.BackupCodeCount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	user.TwoFactorSecret = encryptedSecret
+	user.TwoFactorPendingSecret = ""
+	user.TwoFactorEnabled = true
+	user.BackupCodeHashes = backupCodeHashes
+
+	if err := s.userRepository.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return backupCodes, nil
+}
+
+func (s *UserService) DisableTwoFactor(
+	ctx context.Context,
+	userID string,
+	code string,
+) error {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if !user.Status {
+		return ErrInvalidCredentials
+	}
+
+	if !user.TwoFactorEnabled ||
+		strings.TrimSpace(user.TwoFactorSecret) == "" {
+		return ErrTwoFactorNotEnabled
+	}
+
+	decryptedSecret, err := s.totpEncryptionService.Decrypt(
+		user.TwoFactorSecret,
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := s.totpService.VerifyCode(
+		decryptedSecret,
+		code,
+	); err != nil {
+		return err
+	}
+
+	user.TwoFactorEnabled = false
+	user.TwoFactorSecret = ""
+	user.TwoFactorPendingSecret = ""
+	user.BackupCodeHashes = nil
+
+	return s.userRepository.Update(ctx, user)
+}
+
+func (s *UserService) VerifyBackupCode(
+	ctx context.Context,
+	userID string,
+	code string,
+) (int, error) {
+	userID = strings.TrimSpace(userID)
+	code = strings.ToUpper(strings.TrimSpace(code))
+
+	if userID == "" {
+		return 0, ErrInvalidUserID
+	}
+
+	if code == "" {
+		return 0, ErrInvalidBackupCode
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	if !user.Status || !user.TwoFactorEnabled {
+		return 0, ErrInvalidCredentials
+	}
+
+	for index, hash := range user.BackupCodeHashes {
+		if err := bcrypt.CompareHashAndPassword(
+			[]byte(hash),
+			[]byte(code),
+		); err != nil {
+			continue
+		}
+
+		user.BackupCodeHashes = append(
+			user.BackupCodeHashes[:index],
+			user.BackupCodeHashes[index+1:]...,
+		)
+
+		if err := s.userRepository.Update(ctx, user); err != nil {
+			return 0, err
+		}
+
+		remaining := len(user.BackupCodeHashes)
+
+		return remaining, nil
+	}
+
+	return 0, ErrInvalidBackupCode
+}
+
+func (s *UserService) RegenerateBackupCodes(
+	ctx context.Context,
+	userID string,
+	code string,
+) ([]string, error) {
+	userID = strings.TrimSpace(userID)
+	code = strings.ToUpper(strings.TrimSpace(code))
+
+	if userID == "" {
+		return nil, ErrInvalidUserID
+	}
+
+	if code == "" {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.Status {
+		return nil, ErrInvalidCredentials
+	}
+
+	if !user.TwoFactorEnabled ||
+		strings.TrimSpace(user.TwoFactorSecret) == "" {
+		return nil, ErrTwoFactorNotEnabled
+	}
+
+	// A TOTP code is exactly 6 digits.
+	if len(code) == 6 {
+		decryptedSecret, err := s.totpEncryptionService.Decrypt(
+			user.TwoFactorSecret,
+		)
+		if err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+
+		if err := s.totpService.VerifyCode(
+			decryptedSecret,
+			code,
+		); err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+	} else {
+		backupCodeValid := false
+
+		for _, hash := range user.BackupCodeHashes {
+			if err := bcrypt.CompareHashAndPassword(
+				[]byte(hash),
+				[]byte(code),
+			); err == nil {
+				backupCodeValid = true
+				break
+			}
+		}
+
+		if !backupCodeValid {
+			return nil, ErrInvalidBackupCode
+		}
+	}
+
+	backupCodes, backupCodeHashes, err := utils.GenerateBackupCodes(
+		s.config.BackupCodeCount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Replaces the entire old set.
+	// Therefore all previous backup codes become invalid.
+	user.BackupCodeHashes = backupCodeHashes
+
+	if err := s.userRepository.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return backupCodes, nil
+}
+
+func (s *UserService) ResetTwoFactor(
+	ctx context.Context,
+	userID string,
+) error {
+	userID = strings.TrimSpace(userID)
+
+	if userID == "" {
+		return ErrInvalidUserID
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if user.Role == models.RoleAdmin {
+		return ErrTwoFactorResetNotAllowed
+	}
+
+	user.TwoFactorEnabled = false
+	user.TwoFactorSecret = ""
+	user.TwoFactorPendingSecret = ""
+	user.BackupCodeHashes = nil
+
+	return s.userRepository.Update(ctx, user)
 }
