@@ -39,6 +39,9 @@ type LoginResult struct {
 	RefreshExpiry     time.Time
 	TwoFactorRequired bool
 	ChallengeToken    string
+
+	BackupCodesRemaining int
+	BackupCodesLow       bool
 }
 
 type RefreshResult struct {

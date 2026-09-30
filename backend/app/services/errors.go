@@ -40,4 +40,5 @@ var (
 	ErrTwoFactorSetupNotStarted = errors.New("two-factor setup has not been started")
 	ErrTwoFactorNotEnabled      = errors.New("two-factor authentication is not enabled")
 	ErrTwoFactorAlreadyEnabled  = errors.New("two-factor authentication is already enabled")
+	ErrInvalidBackupCode        = errors.New("invalid backup code")
 )

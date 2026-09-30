@@ -80,3 +80,26 @@ func (s *SettingsService) UpdateTwoFactorEnabled(
 		updatedBy,
 	)
 }
+
+func (s *SettingsService) ValidateTwoFactorStartupConfig(
+	ctx context.Context,
+) error {
+	enabled, err := s.IsTwoFactorEnabled(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !enabled {
+		return nil
+	}
+
+	if err := s.config.ValidateTOTPEncryptionKey(); err != nil {
+		return err
+	}
+
+	if err := s.config.ValidateBackupCodeConfig(); err != nil {
+		return err
+	}
+
+	return nil
+}

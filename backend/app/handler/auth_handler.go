@@ -195,8 +195,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "login successful",
-		"user":    result.User,
+		"message":              "login successful",
+		"user":                 result.User,
+		"backupCodesRemaining": result.BackupCodesRemaining,
+		"backupCodesLow":       result.BackupCodesLow,
 	})
 }
 
@@ -405,7 +407,7 @@ func (h *AuthHandler) VerifyTwoFactorSetup(c *gin.Context) {
 		return
 	}
 
-	err := h.userService.VerifyTwoFactorSetup(
+	backupCodes, err := h.userService.VerifyTwoFactorSetup(
 		c.Request.Context(),
 		userID,
 		req.Code,
@@ -447,8 +449,11 @@ func (h *AuthHandler) VerifyTwoFactorSetup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":          "two-factor authentication enabled",
-		"twoFactorEnabled": true,
+		"message":              "two-factor authentication enabled. Save your backup codes now. They will not be shown again. You can generate a new set later.",
+		"twoFactorEnabled":     true,
+		"backupCodes":          backupCodes,
+		"backupCodesRemaining": len(backupCodes),
+		"backupCodesLow":       len(backupCodes) <= h.config.BackupCodeLowThreshold,
 	})
 }
 
@@ -497,8 +502,10 @@ func (h *AuthHandler) VerifyTwoFactorLogin(c *gin.Context) {
 	)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "login successful",
-		"user":    result.User,
+		"message":              "login successful",
+		"user":                 result.User,
+		"backupCodesRemaining": result.BackupCodesRemaining,
+		"backupCodesLow":       result.BackupCodesLow,
 	})
 }
 

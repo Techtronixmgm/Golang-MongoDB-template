@@ -144,7 +144,7 @@ func NewRouter(
 	// Services / handlers
 	// ------------------------------------------------------------------
 
-	userService := services.NewUserService(userRepository, totpService, totpEncryptionService)
+	userService := services.NewUserService(userRepository, totpService, totpEncryptionService, cfg)
 	authHandler := handler.NewAuthHandler(authService, userService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 

@@ -433,18 +433,34 @@ func (s *AuthService) VerifyTwoFactorLogin(
 		return nil, ErrInvalidCredentials
 	}
 
-	decryptedSecret, err := s.totpEncryptionService.Decrypt(
-		user.TwoFactorSecret,
-	)
-	if err != nil {
-		return nil, ErrInvalidTOTPCode
-	}
+	backupCodesRemaining := len(user.BackupCodeHashes)
+	backupCodesLow := backupCodesRemaining <= s.config.BackupCodeLowThreshold
 
-	if err := s.totpService.VerifyCode(
-		decryptedSecret,
-		code,
-	); err != nil {
-		return nil, ErrInvalidTOTPCode
+	if len(code) == 6 {
+		decryptedSecret, err := s.totpEncryptionService.Decrypt(
+			user.TwoFactorSecret,
+		)
+		if err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+
+		if err := s.totpService.VerifyCode(
+			decryptedSecret,
+			code,
+		); err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+	} else {
+		backupCodesRemaining, err = s.verifyBackupCode(
+			ctx,
+			user,
+			code,
+		)
+		if err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+
+		backupCodesLow = backupCodesRemaining <= 4
 	}
 
 	accessToken, err := auth.GenerateToken(
@@ -492,9 +508,45 @@ func (s *AuthService) VerifyTwoFactorLogin(
 	user.LastLoginAt = &now
 
 	return &dto.LoginResult{
-		User:          user,
-		AccessToken:   accessToken,
-		RefreshToken:  refreshToken,
-		RefreshExpiry: refreshExpiry,
+		User:                 user,
+		AccessToken:          accessToken,
+		RefreshToken:         refreshToken,
+		RefreshExpiry:        refreshExpiry,
+		BackupCodesRemaining: backupCodesRemaining,
+		BackupCodesLow:       backupCodesLow,
 	}, nil
+}
+
+func (s *AuthService) verifyBackupCode(
+	ctx context.Context,
+	user *models.User,
+	code string,
+) (int, error) {
+	code = strings.ToUpper(strings.TrimSpace(code))
+
+	if code == "" {
+		return 0, ErrInvalidBackupCode
+	}
+
+	for index, hash := range user.BackupCodeHashes {
+		if err := bcrypt.CompareHashAndPassword(
+			[]byte(hash),
+			[]byte(code),
+		); err != nil {
+			continue
+		}
+
+		user.BackupCodeHashes = append(
+			user.BackupCodeHashes[:index],
+			user.BackupCodeHashes[index+1:]...,
+		)
+
+		if err := s.userRepository.Update(ctx, user); err != nil {
+			return 0, err
+		}
+
+		return len(user.BackupCodeHashes), nil
+	}
+
+	return 0, ErrInvalidBackupCode
 }

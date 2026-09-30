@@ -30,10 +30,12 @@ type Config struct {
 	GinMode                          string
 	RefreshTokenRevokedRetentionDays int
 
-	CookieSameSite    string
-	AllowedOrigins    []string
-	TOTPIssuer        string
-	TOTPEncryptionKey string
+	CookieSameSite         string
+	AllowedOrigins         []string
+	TOTPIssuer             string
+	TOTPEncryptionKey      string
+	BackupCodeCount        int
+	BackupCodeLowThreshold int
 }
 
 func Load() (Config, error) {
@@ -213,6 +215,44 @@ func Load() (Config, error) {
 		os.Getenv("TOTP_ENCRYPTION_KEY"),
 	)
 
+	// Backup code settings.
+	// Defaults:
+	//   BACKUP_CODE_COUNT=10
+	//   BACKUP_CODE_LOW_THRESHOLD=4
+	backupCodeCount := 10
+
+	backupCodeCountStr := strings.TrimSpace(
+		os.Getenv("BACKUP_CODE_COUNT"),
+	)
+
+	if backupCodeCountStr != "" {
+		backupCodeCount, err = strconv.Atoi(backupCodeCountStr)
+		if err != nil {
+			return Config{}, fmt.Errorf(
+				"invalid BACKUP_CODE_COUNT: %w",
+				err,
+			)
+		}
+	}
+
+	backupCodeLowThreshold := 4
+
+	backupCodeLowThresholdStr := strings.TrimSpace(
+		os.Getenv("BACKUP_CODE_LOW_THRESHOLD"),
+	)
+
+	if backupCodeLowThresholdStr != "" {
+		backupCodeLowThreshold, err = strconv.Atoi(
+			backupCodeLowThresholdStr,
+		)
+		if err != nil {
+			return Config{}, fmt.Errorf(
+				"invalid BACKUP_CODE_LOW_THRESHOLD: %w",
+				err,
+			)
+		}
+	}
+
 	config := Config{
 		MongoUri:                         mongoURI,
 		MongoDB:                          mongoDB,
@@ -229,6 +269,8 @@ func Load() (Config, error) {
 		AllowedOrigins:                   allowedOrigins,
 		TOTPIssuer:                       tOTPIssuer,
 		TOTPEncryptionKey:                tOTPEncryptionKey,
+		BackupCodeCount:                  backupCodeCount,
+		BackupCodeLowThreshold:           backupCodeLowThreshold,
 	}
 
 	if err := config.Validate(); err != nil {
@@ -357,6 +399,22 @@ func (c Config) ValidateTOTPEncryptionKey() error {
 
 	if len([]byte(key)) < 32 {
 		return ErrTOTPEncryptionKeyTooWeak
+	}
+
+	return nil
+}
+
+func (c Config) ValidateBackupCodeConfig() error {
+	if c.BackupCodeLowThreshold < 4 {
+		return errors.New(
+			"backup code low threshold must be at least 4",
+		)
+	}
+
+	if c.BackupCodeCount < c.BackupCodeLowThreshold+4 {
+		return errors.New(
+			"backup code count must be at least 4 greater than backup code low threshold",
+		)
 	}
 
 	return nil
