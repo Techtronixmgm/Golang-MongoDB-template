@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"basic-app/config"
 	"basic-app/models"
@@ -102,4 +103,31 @@ func (s *SettingsService) ValidateTwoFactorStartupConfig(
 	}
 
 	return nil
+}
+
+func (s *SettingsService) UpdateLoginIdentifiers(
+	ctx context.Context,
+	primaryEmail bool,
+	username bool,
+	phone bool,
+	altEmail bool,
+	updatedBy string,
+) error {
+	if !primaryEmail &&
+		!username &&
+		!phone &&
+		!altEmail {
+		return errors.New(
+			"At least one login identifier must be enabled",
+		)
+	}
+
+	return s.settingsRepository.UpdateLoginIdentifiers(
+		ctx,
+		primaryEmail,
+		username,
+		phone,
+		altEmail,
+		updatedBy,
+	)
 }

@@ -448,6 +448,7 @@ func (r *UserRepository) FindByLoginIdentifier(
 			bson.M{"username": identifier},
 			bson.M{"email": identifier},
 			bson.M{"alt_email": identifier},
+			bson.M{"phone": identifier},
 		},
 	}
 

@@ -47,8 +47,12 @@ func (h *SettingsHandler) GetPrivateSettings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dto.PrivateSettingsResponse{
-		RegistrationEnabled: settings.RegistrationEnabled,
-		TwoFactorEnabled:    settings.TwoFactorEnabled,
+		RegistrationEnabled:   settings.RegistrationEnabled,
+		TwoFactorEnabled:      settings.TwoFactorEnabled,
+		LoginWithPrimaryEmail: settings.LoginWithPrimaryEmail,
+		LoginWithUsername:     settings.LoginWithUsername,
+		LoginWithPhone:        settings.LoginWithPhone,
+		LoginWithAltEmail:     settings.LoginWithAltEmail,
 	})
 }
 
@@ -63,7 +67,11 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 	}
 
 	if req.RegistrationEnabled == nil &&
-		req.TwoFactorEnabled == nil {
+		req.TwoFactorEnabled == nil &&
+		req.LoginWithPrimaryEmail == nil &&
+		req.LoginWithUsername == nil &&
+		req.LoginWithPhone == nil &&
+		req.LoginWithAltEmail == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "no settings to update",
 		})
@@ -108,6 +116,57 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 				})
 			}
 
+			return
+		}
+	}
+
+	if req.LoginWithPrimaryEmail != nil ||
+		req.LoginWithUsername != nil ||
+		req.LoginWithPhone != nil ||
+		req.LoginWithAltEmail != nil {
+
+		settings, err := h.settingsService.GetSettings(
+			c.Request.Context(),
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to load login settings",
+			})
+			return
+		}
+
+		primaryEmail := settings.LoginWithPrimaryEmail
+		username := settings.LoginWithUsername
+		phone := settings.LoginWithPhone
+		altEmail := settings.LoginWithAltEmail
+
+		if req.LoginWithPrimaryEmail != nil {
+			primaryEmail = *req.LoginWithPrimaryEmail
+		}
+
+		if req.LoginWithUsername != nil {
+			username = *req.LoginWithUsername
+		}
+
+		if req.LoginWithPhone != nil {
+			phone = *req.LoginWithPhone
+		}
+
+		if req.LoginWithAltEmail != nil {
+			altEmail = *req.LoginWithAltEmail
+		}
+
+		if err := h.settingsService.UpdateLoginIdentifiers(
+			c.Request.Context(),
+			primaryEmail,
+			username,
+			phone,
+			altEmail,
+			actorID,
+		); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
 	}

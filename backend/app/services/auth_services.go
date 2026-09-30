@@ -243,12 +243,38 @@ func (s *AuthService) Login(
 		ctx,
 		identifier,
 	)
+
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) {
 			return nil, ErrInvalidCredentials
 		}
 
 		return nil, err
+	}
+
+	settings, err := s.settingsService.GetSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	loginAllowed := false
+
+	switch identifier {
+	case strings.ToLower(user.Username):
+		loginAllowed = settings.LoginWithUsername
+
+	case strings.ToLower(user.Email):
+		loginAllowed = settings.LoginWithPrimaryEmail
+
+	case strings.ToLower(user.AltEmail):
+		loginAllowed = settings.LoginWithAltEmail
+
+	case user.Phone:
+		loginAllowed = settings.LoginWithPhone
+	}
+
+	if !loginAllowed {
+		return nil, ErrInvalidCredentials
 	}
 
 	if !user.Status {

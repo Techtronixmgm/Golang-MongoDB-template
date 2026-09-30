@@ -51,12 +51,58 @@ func (r *ApplicationSettingsRepository) EnsureDefaults(ctx context.Context) erro
 	_, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": models.ApplicationSettingsID},
-		bson.M{
-			"$setOnInsert": bson.M{
-				"registration_enabled": true,
-				"two_factor_enabled":   false,
-				"updated_at":           now,
-				"updated_by":           "system",
+		bson.A{
+			bson.M{
+				"$set": bson.M{
+					"registration_enabled": bson.M{
+						"$ifNull": bson.A{
+							"$registration_enabled",
+							true,
+						},
+					},
+					"two_factor_enabled": bson.M{
+						"$ifNull": bson.A{
+							"$two_factor_enabled",
+							false,
+						},
+					},
+					"login_with_primary_email": bson.M{
+						"$ifNull": bson.A{
+							"$login_with_primary_email",
+							true,
+						},
+					},
+					"login_with_username": bson.M{
+						"$ifNull": bson.A{
+							"$login_with_username",
+							true,
+						},
+					},
+					"login_with_phone": bson.M{
+						"$ifNull": bson.A{
+							"$login_with_phone",
+							false,
+						},
+					},
+					"login_with_alt_email": bson.M{
+						"$ifNull": bson.A{
+							"$login_with_alt_email",
+							false,
+						},
+					},
+					"updated_at": bson.M{
+						"$ifNull": bson.A{
+							"$updated_at",
+							now,
+						},
+					},
+					"updated_by": bson.M{
+						"$ifNull": bson.A{
+							"$updated_by",
+							"system",
+						},
+					},
+				},
 			},
 		},
 		options.UpdateOne().SetUpsert(true),
@@ -98,6 +144,32 @@ func (r *ApplicationSettingsRepository) UpdateTwoFactorEnabled(
 				"two_factor_enabled": enabled,
 				"updated_at":         time.Now().UTC(),
 				"updated_by":         updatedBy,
+			},
+		},
+	)
+
+	return err
+}
+
+func (r *ApplicationSettingsRepository) UpdateLoginIdentifiers(
+	ctx context.Context,
+	primaryEmail bool,
+	username bool,
+	phone bool,
+	altEmail bool,
+	updatedBy string,
+) error {
+	_, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": models.ApplicationSettingsID},
+		bson.M{
+			"$set": bson.M{
+				"login_with_primary_email": primaryEmail,
+				"login_with_username":      username,
+				"login_with_phone":         phone,
+				"login_with_alt_email":     altEmail,
+				"updated_at":               time.Now().UTC(),
+				"updated_by":               updatedBy,
 			},
 		},
 	)
