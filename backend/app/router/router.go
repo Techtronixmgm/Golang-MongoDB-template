@@ -199,7 +199,7 @@ func NewRouter(
 		authRoutes.POST("/register", authHandler.Register)
 		authRoutes.POST("/login", authHandler.Login)
 		authRoutes.POST("/refresh", authHandler.Refresh)
-		authRoutes.POST("2fa/verify-login", authHandler.VerifyTwoFactorLogin)
+		authRoutes.POST("/2fa/verify-login", authHandler.VerifyTwoFactorLogin)
 
 		// Authenticated
 		protected := authRoutes.Group("")
@@ -215,6 +215,7 @@ func NewRouter(
 		protected.POST("/2fa/setup", authHandler.StartTwoFactorSetup)
 		protected.POST("/2fa/verify-setup", authHandler.VerifyTwoFactorSetup)
 		protected.POST("/2fa/disable", authHandler.DisableTwoFactor)
+		protected.POST("/2fa/backup-codes/regenerate", authHandler.RegenerateBackupCodes)
 	}
 
 	// ------------------------------------------------------------------

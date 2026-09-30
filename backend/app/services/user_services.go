@@ -866,3 +866,84 @@ func (s *UserService) VerifyBackupCode(
 
 	return 0, ErrInvalidBackupCode
 }
+
+func (s *UserService) RegenerateBackupCodes(
+	ctx context.Context,
+	userID string,
+	code string,
+) ([]string, error) {
+	userID = strings.TrimSpace(userID)
+	code = strings.ToUpper(strings.TrimSpace(code))
+
+	if userID == "" {
+		return nil, ErrInvalidUserID
+	}
+
+	if code == "" {
+		return nil, ErrInvalidTOTPCode
+	}
+
+	user, err := s.userRepository.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !user.Status {
+		return nil, ErrInvalidCredentials
+	}
+
+	if !user.TwoFactorEnabled ||
+		strings.TrimSpace(user.TwoFactorSecret) == "" {
+		return nil, ErrTwoFactorNotEnabled
+	}
+
+	// A TOTP code is exactly 6 digits.
+	if len(code) == 6 {
+		decryptedSecret, err := s.totpEncryptionService.Decrypt(
+			user.TwoFactorSecret,
+		)
+		if err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+
+		if err := s.totpService.VerifyCode(
+			decryptedSecret,
+			code,
+		); err != nil {
+			return nil, ErrInvalidTOTPCode
+		}
+	} else {
+		backupCodeValid := false
+
+		for _, hash := range user.BackupCodeHashes {
+			if err := bcrypt.CompareHashAndPassword(
+				[]byte(hash),
+				[]byte(code),
+			); err == nil {
+				backupCodeValid = true
+				break
+			}
+		}
+
+		if !backupCodeValid {
+			return nil, ErrInvalidBackupCode
+		}
+	}
+
+	backupCodes, backupCodeHashes, err := utils.GenerateBackupCodes(
+		s.config.BackupCodeCount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Replaces the entire old set.
+	// Therefore all previous backup codes become invalid.
+	user.BackupCodeHashes = backupCodeHashes
+
+	if err := s.userRepository.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return backupCodes, nil
+}

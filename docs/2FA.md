@@ -254,4 +254,3 @@ The following 2FA behavior has been tested:
 - The challenge token cannot be used as a normal access token.
 - The encryption key must be supplied through server configuration and must not be committed to source control.
 - `otpauthUrl` and TOTP secrets must not be logged.
-"""

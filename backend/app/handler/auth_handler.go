@@ -560,3 +560,56 @@ func (h *AuthHandler) DisableTwoFactor(c *gin.Context) {
 		"twoFactorEnabled": false,
 	})
 }
+
+func (h *AuthHandler) RegenerateBackupCodes(c *gin.Context) {
+	var req dto.RegenerateBackupCodesRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid request body",
+		})
+		return
+	}
+
+	userID := c.GetString("userID")
+
+	backupCodes, err := h.userService.RegenerateBackupCodes(
+		c.Request.Context(),
+		userID,
+		req.Code,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrTwoFactorNotEnabled):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "two-factor authentication is not enabled",
+			})
+
+		case errors.Is(err, services.ErrInvalidTOTPCode),
+			errors.Is(err, services.ErrInvalidBackupCode):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "invalid two-factor code",
+			})
+
+		case errors.Is(err, services.ErrInvalidUserID),
+			errors.Is(err, services.ErrInvalidCredentials):
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "unauthorized",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to regenerate backup codes",
+			})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":              "backup codes regenerated successfully. Save them now. They will not be shown again.",
+		"backupCodes":          backupCodes,
+		"backupCodesRemaining": len(backupCodes),
+		"backupCodesLow":       len(backupCodes) <= h.config.BackupCodeLowThreshold,
+	})
+}

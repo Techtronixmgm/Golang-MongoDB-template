@@ -58,3 +58,7 @@ type VerifyTwoFactorLoginRequest struct {
 type DisableTwoFactorRequest struct {
 	Code string `json:"code"`
 }
+
+type RegenerateBackupCodesRequest struct {
+	Code string `json:"code"`
+}
