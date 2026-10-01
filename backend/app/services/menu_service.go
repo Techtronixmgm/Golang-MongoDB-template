@@ -409,3 +409,171 @@ func (s *MenuService) AddItem(
 
 	return menu, nil
 }
+
+func (s *MenuService) UpdateItem(
+	ctx context.Context,
+	menuID string,
+	itemID string,
+	req *dto.UpdateMenuItemRequest,
+) (*models.Menu, error) {
+	menu, err := s.menuRepository.FindByID(
+		ctx,
+		menuID,
+	)
+	if err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
+
+		return nil, err
+	}
+
+	itemObjectID, err := bson.ObjectIDFromHex(itemID)
+	if err != nil {
+		return nil, ErrMenuItemNotFound
+	}
+
+	itemIndex := -1
+
+	for i := range menu.Items {
+		if menu.Items[i].ID == itemObjectID {
+			itemIndex = i
+			break
+		}
+	}
+
+	if itemIndex == -1 {
+		return nil, ErrMenuItemNotFound
+	}
+
+	item := &menu.Items[itemIndex]
+
+	if req.Label != nil {
+		label := strings.TrimSpace(*req.Label)
+
+		if label == "" {
+			return nil, ErrInvalidMenuItem
+		}
+
+		item.Label = label
+	}
+
+	if req.DisplayStatus != nil {
+		item.DisplayStatus = *req.DisplayStatus
+	}
+
+	if req.Type != nil {
+		if !isValidMenuItemType(*req.Type) {
+			return nil, ErrInvalidMenuItem
+		}
+
+		item.Type = *req.Type
+
+		switch item.Type {
+		case models.MenuItemTypePage:
+			item.URL = ""
+
+		case models.MenuItemTypeURL:
+			item.PageID = nil
+
+		case models.MenuItemTypeGroup:
+			item.PageID = nil
+			item.URL = ""
+		}
+	}
+
+	if req.PageID != nil {
+		pageID := strings.TrimSpace(*req.PageID)
+
+		switch item.Type {
+		case models.MenuItemTypePage:
+			if pageID == "" {
+				return nil, ErrInvalidMenuItem
+			}
+
+			page, err := s.pageRepository.FindByID(
+				ctx,
+				pageID,
+			)
+			if err != nil {
+				if errors.Is(err, ErrPageNotFound) {
+					return nil, ErrPageNotFound
+				}
+
+				return nil, err
+			}
+
+			objectID, err := bson.ObjectIDFromHex(pageID)
+			if err != nil {
+				return nil, ErrInvalidMenuItem
+			}
+
+			_ = page
+
+			item.PageID = &objectID
+
+		case models.MenuItemTypeURL,
+			models.MenuItemTypeGroup:
+			if pageID != "" {
+				return nil, ErrInvalidMenuItem
+			}
+		}
+	}
+
+	if req.URL != nil {
+		url := strings.TrimSpace(*req.URL)
+
+		switch item.Type {
+		case models.MenuItemTypePage,
+			models.MenuItemTypeGroup:
+			if url != "" {
+				return nil, ErrInvalidMenuItem
+			}
+
+			item.URL = ""
+
+		case models.MenuItemTypeURL:
+			if url == "" {
+				return nil, ErrInvalidMenuItem
+			}
+
+			item.URL = url
+		}
+	}
+
+	switch item.Type {
+	case models.MenuItemTypePage:
+		if item.PageID == nil {
+			return nil, ErrInvalidMenuItem
+		}
+
+		item.URL = ""
+
+	case models.MenuItemTypeURL:
+		if item.URL == "" {
+			return nil, ErrInvalidMenuItem
+		}
+
+		item.PageID = nil
+
+	case models.MenuItemTypeGroup:
+		item.PageID = nil
+		item.URL = ""
+	}
+
+	menu.UpdatedAt = time.Now()
+
+	if err := s.menuRepository.Update(
+		ctx,
+		menuID,
+		menu,
+	); err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
+
+		return nil, err
+	}
+
+	return menu, nil
+}

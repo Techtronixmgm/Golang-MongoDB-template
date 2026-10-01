@@ -281,3 +281,59 @@ func (h *MenuHandler) AddItem(c *gin.Context) {
 		"data":    menu,
 	})
 }
+
+func (h *MenuHandler) UpdateItem(c *gin.Context) {
+	menuID := c.Param("id")
+	itemID := c.Param("itemId")
+
+	var req dto.UpdateMenuItemRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	menu, err := h.menuService.UpdateItem(
+		c.Request.Context(),
+		menuID,
+		itemID,
+		&req,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrMenuNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "menu not found",
+			})
+
+		case errors.Is(err, services.ErrMenuItemNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "menu item not found",
+			})
+
+		case errors.Is(err, services.ErrPageNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "referenced page not found",
+			})
+
+		case errors.Is(err, services.ErrInvalidMenuItem):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to update menu item",
+			})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "menu item updated successfully",
+		"data":    menu,
+	})
+}

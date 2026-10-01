@@ -155,7 +155,7 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 
 	api := r.Group("/api/v1")
 
-	// Public pages
+	// Public / registered pages
 	api.GET(
 		"/pages/:slug",
 		optionalAuthMiddleware,
@@ -182,7 +182,10 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	menus.GET("/:id", menuHandler.Get)
 	menus.PATCH("/:id", menuHandler.Update)
 	menus.DELETE("/:id", menuHandler.Delete)
+
+	// menu items
 	menus.POST("/:id/items", menuHandler.AddItem)
+	menus.PATCH("/:id/items/:itemId", menuHandler.UpdateItem)
 
 	return r
 }

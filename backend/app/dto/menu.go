@@ -38,3 +38,11 @@ type PublicMenuItemResponse struct {
 	DisplayStatus bool                     `json:"displayStatus"`
 	Children      []PublicMenuItemResponse `json:"children"`
 }
+
+type UpdateMenuItemRequest struct {
+	Label         *string              `json:"label"`
+	Type          *models.MenuItemType `json:"type"`
+	PageID        *string              `json:"pageId"`
+	URL           *string              `json:"url"`
+	DisplayStatus *bool                `json:"displayStatus"`
+}
