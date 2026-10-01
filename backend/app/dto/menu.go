@@ -6,16 +6,14 @@ type CreateMenuRequest struct {
 	Name     string              `json:"name" binding:"required"`
 	Location models.MenuLocation `json:"location" binding:"required"`
 	Status   bool                `json:"status"`
-	Items    []MenuItemRequest   `json:"items"`
+	// Items    []MenuItemRequest   `json:"items"`
 }
 
 type UpdateMenuRequest struct {
-	Name     *string              `json:"name"`
-	Location *models.MenuLocation `json:"location"`
-	Status   *bool                `json:"status"`
-	Items    *[]MenuItemRequest   `json:"items"`
+	Name   *string `json:"name"`
+	Status *bool   `json:"status"`
+	// Items    *[]MenuItemRequest   `json:"items"`
 }
-
 type MenuItemRequest struct {
 	ID            *string              `json:"id"`
 	Label         *string              `json:"label"`
@@ -26,7 +24,6 @@ type MenuItemRequest struct {
 	DisplayStatus *bool                `json:"displayStatus"`
 	Children      *[]MenuItemRequest   `json:"children"`
 }
-
 type PublicMenuResponse struct {
 	Name     string                   `json:"name"`
 	Location models.MenuLocation      `json:"location"`

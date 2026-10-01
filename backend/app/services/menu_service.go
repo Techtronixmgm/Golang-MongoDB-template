@@ -81,89 +81,53 @@ func (s *MenuService) Create(
 	return menu, nil
 }
 
-// func (s *MenuService) Update(
-// 	ctx context.Context,
-// 	id string,
-// 	req *dto.UpdateMenuRequest,
-// ) (*models.Menu, error) {
-// 	menu, err := s.menuRepository.FindByID(
-// 		ctx,
-// 		id,
-// 	)
-// 	if err != nil {
-// 		if errors.Is(err, ErrMenuNotFound) {
-// 			return nil, ErrMenuNotFound
-// 		}
+func (s *MenuService) Update(
+	ctx context.Context,
+	id string,
+	req *dto.UpdateMenuRequest,
+) (*models.Menu, error) {
+	menu, err := s.menuRepository.FindByID(
+		ctx,
+		id,
+	)
+	if err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
 
-// 		return nil, err
-// 	}
+		return nil, err
+	}
 
-// 	if req.Name != nil {
-// 		name := strings.TrimSpace(*req.Name)
+	if req.Name != nil {
+		name := strings.TrimSpace(*req.Name)
 
-// 		if name == "" {
-// 			return nil, ErrInvalidMenuName
-// 		}
+		if name == "" {
+			return nil, ErrInvalidMenuName
+		}
 
-// 		menu.Name = name
-// 	}
+		menu.Name = name
+	}
 
-// 	if req.Location != nil {
-// 		if !isValidMenuLocation(*req.Location) {
-// 			return nil, ErrInvalidMenuLocation
-// 		}
+	if req.Status != nil {
+		menu.Status = *req.Status
+	}
 
-// 		if *req.Location != menu.Location {
-// 			existingMenu, err := s.menuRepository.FindByLocation(
-// 				ctx,
-// 				*req.Location,
-// 			)
+	menu.UpdatedAt = time.Now()
 
-// 			if err == nil {
-// 				if existingMenu.ID != menu.ID {
-// 					return nil, ErrMenuAlreadyExists
-// 				}
-// 			} else if !errors.Is(err, ErrMenuNotFound) {
-// 				return nil, err
-// 			}
-// 		}
+	if err := s.menuRepository.Update(
+		ctx,
+		id,
+		menu,
+	); err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
 
-// 		menu.Location = *req.Location
-// 	}
+		return nil, err
+	}
 
-// 	if req.Status != nil {
-// 		menu.Status = *req.Status
-// 	}
-
-// 	if req.Items != nil {
-// 		items, err := s.buildMenuItems(
-// 			ctx,
-// 			*req.Items,
-// 			1,
-// 		)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		menu.Items = items
-// 	}
-
-// 	menu.UpdatedAt = time.Now()
-
-// 	if err := s.menuRepository.Update(
-// 		ctx,
-// 		id,
-// 		menu,
-// 	); err != nil {
-// 		if errors.Is(err, ErrMenuNotFound) {
-// 			return nil, ErrMenuNotFound
-// 		}
-
-// 		return nil, err
-// 	}
-
-// 	return menu, nil
-// }
+	return menu, nil
+}
 
 func (s *MenuService) Get(
 	ctx context.Context,

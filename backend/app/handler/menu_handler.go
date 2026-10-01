@@ -121,67 +121,67 @@ func (h *MenuHandler) List(c *gin.Context) {
 	})
 }
 
-// func (h *MenuHandler) Update(c *gin.Context) {
-// 	id := c.Param("id")
+func (h *MenuHandler) Update(c *gin.Context) {
+	id := c.Param("id")
 
-// 	var req dto.UpdateMenuRequest
+	var req dto.UpdateMenuRequest
 
-// 	if err := c.ShouldBindJSON(&req); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"error": err.Error(),
-// 		})
-// 		return
-// 	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 
-// 	menu, err := h.menuService.Update(
-// 		c.Request.Context(),
-// 		id,
-// 		&req,
-// 	)
-// 	if err != nil {
-// 		switch {
-// 		case errors.Is(err, services.ErrMenuNotFound):
+	menu, err := h.menuService.Update(
+		c.Request.Context(),
+		id,
+		&req,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrMenuNotFound):
 
-// 			c.JSON(http.StatusNotFound, gin.H{
-// 				"error": "menu not found",
-// 			})
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "menu not found",
+			})
 
-// 		case errors.Is(err, services.ErrInvalidMenuName),
-// 			errors.Is(err, services.ErrInvalidMenuLocation),
-// 			errors.Is(err, services.ErrInvalidMenuItem),
-// 			errors.Is(err, services.ErrMenuDepthExceeded):
+		case errors.Is(err, services.ErrInvalidMenuName),
+			errors.Is(err, services.ErrInvalidMenuLocation),
+			errors.Is(err, services.ErrInvalidMenuItem),
+			errors.Is(err, services.ErrMenuDepthExceeded):
 
-// 			c.JSON(http.StatusBadRequest, gin.H{
-// 				"error": err.Error(),
-// 			})
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
 
-// 		case errors.Is(err, services.ErrMenuAlreadyExists):
+		case errors.Is(err, services.ErrMenuAlreadyExists):
 
-// 			c.JSON(http.StatusConflict, gin.H{
-// 				"error": "menu already exists for this location",
-// 			})
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "menu already exists for this location",
+			})
 
-// 		case errors.Is(err, services.ErrPageNotFound):
+		case errors.Is(err, services.ErrPageNotFound):
 
-// 			c.JSON(http.StatusBadRequest, gin.H{
-// 				"error": "referenced page not found",
-// 			})
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "referenced page not found",
+			})
 
-// 		default:
+		default:
 
-// 			c.JSON(http.StatusInternalServerError, gin.H{
-// 				"error": "unable to update menu",
-// 			})
-// 		}
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to update menu",
+			})
+		}
 
-// 		return
-// 	}
+		return
+	}
 
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"message": "menu updated successfully",
-// 		"menu":    menu,
-// 	})
-// }
+	c.JSON(http.StatusOK, gin.H{
+		"message": "menu updated successfully",
+		"menu":    menu,
+	})
+}
 
 func (h *MenuHandler) GetPublicByLocation(c *gin.Context) {
 	location := models.MenuLocation(
