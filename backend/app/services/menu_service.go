@@ -577,3 +577,64 @@ func (s *MenuService) UpdateItem(
 
 	return menu, nil
 }
+
+func (s *MenuService) DeleteItem(
+	ctx context.Context,
+	menuID string,
+	itemID string,
+) error {
+	menu, err := s.menuRepository.FindByID(
+		ctx,
+		menuID,
+	)
+	if err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return ErrMenuNotFound
+		}
+
+		return err
+	}
+
+	itemObjectID, err := bson.ObjectIDFromHex(itemID)
+	if err != nil {
+		return ErrMenuItemNotFound
+	}
+
+	itemIndex := -1
+
+	for i := range menu.Items {
+		if menu.Items[i].ID == itemObjectID {
+			itemIndex = i
+			break
+		}
+	}
+
+	if itemIndex == -1 {
+		return ErrMenuItemNotFound
+	}
+
+	menu.Items = append(
+		menu.Items[:itemIndex],
+		menu.Items[itemIndex+1:]...,
+	)
+
+	for i := range menu.Items {
+		menu.Items[i].Order = i + 1
+	}
+
+	menu.UpdatedAt = time.Now()
+
+	if err := s.menuRepository.Update(
+		ctx,
+		menuID,
+		menu,
+	); err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return ErrMenuNotFound
+		}
+
+		return err
+	}
+
+	return nil
+}

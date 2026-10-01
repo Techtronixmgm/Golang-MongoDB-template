@@ -9,6 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// User Indexes
+
 func EnsureUserIndexes(
 	ctx context.Context,
 	db *mongodriver.Database,
@@ -65,6 +67,8 @@ func EnsureUserIndexes(
 	return err
 }
 
+// Refresh Token index
+
 func EnsureRefreshTokenIndexes(
 	ctx context.Context,
 	db *mongodriver.Database,
@@ -104,6 +108,8 @@ func EnsureRefreshTokenIndexes(
 
 	return err
 }
+
+// Page indexes
 
 func EnsurePageIndexes(
 	ctx context.Context,
@@ -145,6 +151,8 @@ func EnsurePageIndexes(
 
 	return err
 }
+
+// Menu Indexes
 
 func EnsureMenuIndexes(
 	ctx context.Context,

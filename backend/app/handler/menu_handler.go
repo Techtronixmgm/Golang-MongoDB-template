@@ -337,3 +337,38 @@ func (h *MenuHandler) UpdateItem(c *gin.Context) {
 		"data":    menu,
 	})
 }
+
+func (h *MenuHandler) DeleteItem(c *gin.Context) {
+	menuID := c.Param("id")
+	itemID := c.Param("itemId")
+
+	err := h.menuService.DeleteItem(
+		c.Request.Context(),
+		menuID,
+		itemID,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrMenuNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "menu not found",
+			})
+
+		case errors.Is(err, services.ErrMenuItemNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "menu item not found",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to delete menu item",
+			})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "menu item deleted successfully",
+	})
+}

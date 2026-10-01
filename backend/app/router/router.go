@@ -186,6 +186,7 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	// menu items
 	menus.POST("/:id/items", menuHandler.AddItem)
 	menus.PATCH("/:id/items/:itemId", menuHandler.UpdateItem)
+	menus.DELETE("/:id/items/:itemId", menuHandler.DeleteItem)
 
 	return r
 }
