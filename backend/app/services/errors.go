@@ -31,14 +31,15 @@ var (
 	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 
 	// Menu
-	ErrMenuNotFound        = errors.New("menu not found")
-	ErrMenuInactive        = errors.New("menu inactive")
-	ErrMenuAlreadyExists   = errors.New("menu already exists")
-	ErrInvalidMenuLocation = errors.New("invalid menu location")
-	ErrInvalidMenuName     = errors.New("invalid menu name")
-	ErrInvalidMenuItem     = errors.New("invalid menu item")
-	ErrMenuDepthExceeded   = errors.New("menu nesting cannot exceed 2 levels")
-	ErrMenuItemNotFound    = errors.New("menu item not found")
+	ErrMenuNotFound          = errors.New("menu not found")
+	ErrMenuInactive          = errors.New("menu inactive")
+	ErrMenuAlreadyExists     = errors.New("menu already exists")
+	ErrInvalidMenuLocation   = errors.New("invalid menu location")
+	ErrInvalidMenuName       = errors.New("invalid menu name")
+	ErrInvalidMenuItem       = errors.New("invalid menu item")
+	ErrMenuDepthExceeded     = errors.New("menu nesting cannot exceed 2 levels")
+	ErrMenuItemNotFound      = errors.New("menu item not found")
+	ErrMenuItemOrderNotFound = errors.New("menu item order not found")
 
 	// Pages
 	ErrPageNotFound       = errors.New("page not found")

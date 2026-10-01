@@ -638,3 +638,78 @@ func (s *MenuService) DeleteItem(
 
 	return nil
 }
+
+func (s *MenuService) MoveItem(
+	ctx context.Context,
+	menuID string,
+	itemID string,
+	req *dto.MoveMenuItemRequest,
+) (*models.Menu, error) {
+	menu, err := s.menuRepository.FindByID(
+		ctx,
+		menuID,
+	)
+	if err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
+
+		return nil, err
+	}
+
+	itemObjectID, err := bson.ObjectIDFromHex(itemID)
+	if err != nil {
+		return nil, ErrMenuItemNotFound
+	}
+
+	itemIndex := -1
+
+	for i := range menu.Items {
+		if menu.Items[i].ID == itemObjectID {
+			itemIndex = i
+			break
+		}
+	}
+
+	if itemIndex == -1 {
+		return nil, ErrMenuItemNotFound
+	}
+
+	targetIndex := -1
+
+	for i := range menu.Items {
+		if menu.Items[i].Order == req.Order {
+			targetIndex = i
+			break
+		}
+	}
+
+	if targetIndex == -1 {
+		return nil, ErrMenuItemOrderNotFound
+	}
+
+	if itemIndex == targetIndex {
+		return menu, nil
+	}
+
+	menu.Items[itemIndex].Order,
+		menu.Items[targetIndex].Order =
+		menu.Items[targetIndex].Order,
+		menu.Items[itemIndex].Order
+
+	menu.UpdatedAt = time.Now()
+
+	if err := s.menuRepository.Update(
+		ctx,
+		menuID,
+		menu,
+	); err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
+
+		return nil, err
+	}
+
+	return menu, nil
+}

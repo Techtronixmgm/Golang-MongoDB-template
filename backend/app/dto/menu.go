@@ -46,3 +46,7 @@ type UpdateMenuItemRequest struct {
 	URL           *string              `json:"url"`
 	DisplayStatus *bool                `json:"displayStatus"`
 }
+
+type MoveMenuItemRequest struct {
+	Order int `json:"order" binding:"required"`
+}

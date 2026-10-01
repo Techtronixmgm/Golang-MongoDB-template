@@ -372,3 +372,54 @@ func (h *MenuHandler) DeleteItem(c *gin.Context) {
 		"message": "menu item deleted successfully",
 	})
 }
+
+func (h *MenuHandler) MoveItem(c *gin.Context) {
+	menuID := c.Param("id")
+	itemID := c.Param("itemId")
+
+	var req dto.MoveMenuItemRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	menu, err := h.menuService.MoveItem(
+		c.Request.Context(),
+		menuID,
+		itemID,
+		&req,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrMenuNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "menu not found",
+			})
+
+		case errors.Is(err, services.ErrMenuItemNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "menu item not found",
+			})
+
+		case errors.Is(err, services.ErrMenuItemOrderNotFound):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "menu item order not found",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to move menu item",
+			})
+		}
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "menu item moved successfully",
+		"data":    menu,
+	})
+}
