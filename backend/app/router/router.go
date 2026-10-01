@@ -156,7 +156,11 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	api := r.Group("/api/v1")
 
 	// Public pages
-	api.GET("/pages/:slug", optionalAuthMiddleware, pageHandler.GetBySlug)
+	api.GET(
+		"/pages/:slug",
+		optionalAuthMiddleware,
+		pageHandler.GetBySlug,
+	)
 
 	// Public menus
 	api.GET("/menus/:location", menuHandler.GetPublicByLocation)

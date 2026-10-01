@@ -141,34 +141,16 @@ func (h *MenuHandler) Update(c *gin.Context) {
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrMenuNotFound):
-
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
 			})
 
-		case errors.Is(err, services.ErrInvalidMenuName),
-			errors.Is(err, services.ErrInvalidMenuLocation),
-			errors.Is(err, services.ErrInvalidMenuItem),
-			errors.Is(err, services.ErrMenuDepthExceeded):
-
+		case errors.Is(err, services.ErrInvalidMenuName):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrMenuAlreadyExists):
-
-			c.JSON(http.StatusConflict, gin.H{
-				"error": "menu already exists for this location",
-			})
-
-		case errors.Is(err, services.ErrPageNotFound):
-
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "referenced page not found",
-			})
-
 		default:
-
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "unable to update menu",
 			})
@@ -179,7 +161,7 @@ func (h *MenuHandler) Update(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "menu updated successfully",
-		"menu":    menu,
+		"data":    menu,
 	})
 }
 
