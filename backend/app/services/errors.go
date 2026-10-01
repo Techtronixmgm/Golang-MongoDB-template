@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
@@ -40,7 +39,7 @@ var (
 	ErrInvalidMenuLocation   = errors.New("invalid menu location")
 	ErrInvalidMenuName       = errors.New("invalid menu name")
 	ErrInvalidMenuItem       = errors.New("invalid menu item")
-	ErrMenuDepthExceeded     = fmt.Errorf("menu nesting cannot exceed %d levels", maxMenuDepth)
+	ErrMenuDepthExceeded     = errors.New("menu nesting depth exceeded")
 	ErrMenuItemNotFound      = errors.New("menu item not found")
 	ErrMenuItemOrderNotFound = errors.New("menu item order not found")
 

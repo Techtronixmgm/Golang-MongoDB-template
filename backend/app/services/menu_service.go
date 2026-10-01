@@ -12,7 +12,27 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-const maxMenuDepth = 3
+const (
+	maxTopMenuDepth    = 3
+	maxLeftMenuDepth   = 2
+	maxBottomMenuDepth = 2
+)
+
+func getMaxMenuDepth(location models.MenuLocation) int {
+	switch location {
+	case models.MenuLocationTop:
+		return maxTopMenuDepth
+
+	case models.MenuLocationLeft:
+		return maxLeftMenuDepth
+
+	case models.MenuLocationBottom:
+		return maxBottomMenuDepth
+
+	default:
+		return 0
+	}
+}
 
 type MenuService struct {
 	menuRepository repository.MenuRepository
@@ -425,7 +445,9 @@ func (s *MenuService) AddItem(
 			return nil, ErrInvalidMenuItem
 		}
 
-		if location.Depth >= maxMenuDepth {
+		maxDepth := getMaxMenuDepth(menu.Location)
+
+		if location.Depth >= maxDepth {
 			return nil, ErrMenuDepthExceeded
 		}
 
