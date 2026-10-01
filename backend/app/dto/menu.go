@@ -19,6 +19,7 @@ type AddMenuItemRequest struct {
 	PageID        *string             `json:"pageId"`
 	URL           string              `json:"url"`
 	DisplayStatus *bool               `json:"displayStatus"`
+	ParentID      *string             `json:"parentId"`
 }
 
 type PublicMenuResponse struct {

@@ -260,19 +260,33 @@ func (h *MenuHandler) AddItem(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"message": "menu not found",
 			})
+
+		case errors.Is(err, services.ErrMenuItemNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "menu item not found",
+			})
+
 		case errors.Is(err, services.ErrPageNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"message": "page not found",
 			})
+
+		case errors.Is(err, services.ErrMenuDepthExceeded):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": err.Error(),
+			})
+
 		case errors.Is(err, services.ErrInvalidMenuItem):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"message": "invalid menu item",
 			})
+
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "failed to add menu item",
 			})
 		}
+
 		return
 	}
 

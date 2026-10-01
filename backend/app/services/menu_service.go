@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
+const maxMenuDepth = 3
+
 type MenuService struct {
 	menuRepository repository.MenuRepository
 	pageRepository repository.PageRepository
@@ -327,6 +329,7 @@ func (s *MenuService) AddItem(
 	}
 
 	label := strings.TrimSpace(req.Label)
+
 	if label == "" {
 		return nil, ErrInvalidMenuItem
 	}
@@ -340,7 +343,6 @@ func (s *MenuService) AddItem(
 		Label:         label,
 		Type:          req.Type,
 		URL:           strings.TrimSpace(req.URL),
-		Order:         len(menu.Items) + 1,
 		DisplayStatus: true,
 		Children:      make([]models.MenuItem, 0),
 	}
@@ -392,7 +394,49 @@ func (s *MenuService) AddItem(
 		}
 	}
 
-	menu.Items = append(menu.Items, item)
+	if req.ParentID == nil || strings.TrimSpace(*req.ParentID) == "" {
+		item.Order = len(menu.Items) + 1
+
+		menu.Items = append(menu.Items, item)
+	} else {
+		parentID := strings.TrimSpace(*req.ParentID)
+
+		parentObjectID, err := bson.ObjectIDFromHex(parentID)
+		if err != nil {
+			return nil, ErrMenuItemNotFound
+		}
+
+		location, err := findMenuItemLocation(
+			&menu.Items,
+			parentObjectID,
+			1,
+		)
+		if err != nil {
+			if errors.Is(err, ErrMenuItemNotFound) {
+				return nil, ErrMenuItemNotFound
+			}
+
+			return nil, err
+		}
+
+		parent := location.Item
+
+		if parent.Type != models.MenuItemTypeGroup {
+			return nil, ErrInvalidMenuItem
+		}
+
+		if location.Depth >= maxMenuDepth {
+			return nil, ErrMenuDepthExceeded
+		}
+
+		item.Order = len(parent.Children) + 1
+
+		parent.Children = append(
+			parent.Children,
+			item,
+		)
+	}
+
 	menu.UpdatedAt = time.Now()
 
 	if err := s.menuRepository.Update(
@@ -433,20 +477,20 @@ func (s *MenuService) UpdateItem(
 		return nil, ErrMenuItemNotFound
 	}
 
-	itemIndex := -1
-
-	for i := range menu.Items {
-		if menu.Items[i].ID == itemObjectID {
-			itemIndex = i
-			break
+	location, err := findMenuItemLocation(
+		&menu.Items,
+		itemObjectID,
+		1,
+	)
+	if err != nil {
+		if errors.Is(err, ErrMenuItemNotFound) {
+			return nil, ErrMenuItemNotFound
 		}
+
+		return nil, err
 	}
 
-	if itemIndex == -1 {
-		return nil, ErrMenuItemNotFound
-	}
-
-	item := &menu.Items[itemIndex]
+	item := location.Item
 
 	if req.Label != nil {
 		label := strings.TrimSpace(*req.Label)
@@ -485,13 +529,16 @@ func (s *MenuService) UpdateItem(
 	if req.PageID != nil {
 		pageID := strings.TrimSpace(*req.PageID)
 
-		switch item.Type {
-		case models.MenuItemTypePage:
+		if item.Type != models.MenuItemTypePage {
+			if pageID != "" {
+				return nil, ErrInvalidMenuItem
+			}
+		} else {
 			if pageID == "" {
 				return nil, ErrInvalidMenuItem
 			}
 
-			page, err := s.pageRepository.FindByID(
+			_, err := s.pageRepository.FindByID(
 				ctx,
 				pageID,
 			)
@@ -508,15 +555,7 @@ func (s *MenuService) UpdateItem(
 				return nil, ErrInvalidMenuItem
 			}
 
-			_ = page
-
 			item.PageID = &objectID
-
-		case models.MenuItemTypeURL,
-			models.MenuItemTypeGroup:
-			if pageID != "" {
-				return nil, ErrInvalidMenuItem
-			}
 		}
 	}
 
@@ -600,26 +639,28 @@ func (s *MenuService) DeleteItem(
 		return ErrMenuItemNotFound
 	}
 
-	itemIndex := -1
-
-	for i := range menu.Items {
-		if menu.Items[i].ID == itemObjectID {
-			itemIndex = i
-			break
+	location, err := findMenuItemLocation(
+		&menu.Items,
+		itemObjectID,
+		1,
+	)
+	if err != nil {
+		if errors.Is(err, ErrMenuItemNotFound) {
+			return ErrMenuItemNotFound
 		}
+
+		return err
 	}
 
-	if itemIndex == -1 {
-		return ErrMenuItemNotFound
-	}
+	items := location.Items
 
-	menu.Items = append(
-		menu.Items[:itemIndex],
-		menu.Items[itemIndex+1:]...,
+	*items = append(
+		(*items)[:location.Index],
+		(*items)[location.Index+1:]...,
 	)
 
-	for i := range menu.Items {
-		menu.Items[i].Order = i + 1
+	for i := range *items {
+		(*items)[i].Order = i + 1
 	}
 
 	menu.UpdatedAt = time.Now()
@@ -662,23 +703,25 @@ func (s *MenuService) MoveItem(
 		return nil, ErrMenuItemNotFound
 	}
 
-	itemIndex := -1
-
-	for i := range menu.Items {
-		if menu.Items[i].ID == itemObjectID {
-			itemIndex = i
-			break
+	location, err := findMenuItemLocation(
+		&menu.Items,
+		itemObjectID,
+		1,
+	)
+	if err != nil {
+		if errors.Is(err, ErrMenuItemNotFound) {
+			return nil, ErrMenuItemNotFound
 		}
+
+		return nil, err
 	}
 
-	if itemIndex == -1 {
-		return nil, ErrMenuItemNotFound
-	}
+	items := location.Items
 
 	targetIndex := -1
 
-	for i := range menu.Items {
-		if menu.Items[i].Order == req.Order {
+	for i := range *items {
+		if (*items)[i].Order == req.Order {
 			targetIndex = i
 			break
 		}
@@ -688,14 +731,14 @@ func (s *MenuService) MoveItem(
 		return nil, ErrMenuItemOrderNotFound
 	}
 
-	if itemIndex == targetIndex {
+	if location.Index == targetIndex {
 		return menu, nil
 	}
 
-	menu.Items[itemIndex].Order,
-		menu.Items[targetIndex].Order =
-		menu.Items[targetIndex].Order,
-		menu.Items[itemIndex].Order
+	(*items)[location.Index].Order,
+		(*items)[targetIndex].Order =
+		(*items)[targetIndex].Order,
+		(*items)[location.Index].Order
 
 	menu.UpdatedAt = time.Now()
 
@@ -712,4 +755,115 @@ func (s *MenuService) MoveItem(
 	}
 
 	return menu, nil
+}
+
+func findMenuItemWithDepth(
+	items []models.MenuItem,
+	id bson.ObjectID,
+	depth int,
+) (*models.MenuItem, int, error) {
+	for i := range items {
+		item := &items[i]
+
+		if item.ID == id {
+			return item, depth, nil
+		}
+
+		if len(item.Children) == 0 {
+			continue
+		}
+
+		found, foundDepth, err := findMenuItemWithDepth(
+			item.Children,
+			id,
+			depth+1,
+		)
+		if err == nil {
+			return found, foundDepth, nil
+		}
+
+		if !errors.Is(err, ErrMenuItemNotFound) {
+			return nil, 0, err
+		}
+	}
+
+	return nil, 0, ErrMenuItemNotFound
+}
+
+func findMenuItem(
+	items []models.MenuItem,
+	id bson.ObjectID,
+	depth int,
+) (*models.MenuItem, []models.MenuItem, int, error) {
+	for i := range items {
+		item := &items[i]
+
+		if item.ID == id {
+			return item, items, depth, nil
+		}
+
+		if len(item.Children) == 0 {
+			continue
+		}
+
+		found, siblings, foundDepth, err := findMenuItem(
+			item.Children,
+			id,
+			depth+1,
+		)
+		if err == nil {
+			return found, siblings, foundDepth, nil
+		}
+
+		if !errors.Is(err, ErrMenuItemNotFound) {
+			return nil, nil, 0, err
+		}
+	}
+
+	return nil, nil, 0, ErrMenuItemNotFound
+}
+
+type menuItemLocation struct {
+	Item  *models.MenuItem
+	Items *[]models.MenuItem
+	Index int
+	Depth int
+}
+
+func findMenuItemLocation(
+	items *[]models.MenuItem,
+	id bson.ObjectID,
+	depth int,
+) (*menuItemLocation, error) {
+	for i := range *items {
+		item := &(*items)[i]
+
+		if item.ID == id {
+			return &menuItemLocation{
+				Item:  item,
+				Items: items,
+				Index: i,
+				Depth: depth,
+			}, nil
+		}
+
+		if len(item.Children) == 0 {
+			continue
+		}
+
+		found, err := findMenuItemLocation(
+			&item.Children,
+			id,
+			depth+1,
+		)
+		if err == nil {
+			return found, nil
+		}
+
+		if !errors.Is(err, ErrMenuItemNotFound) {
+			return nil, err
+		}
+	}
+
+	return nil, ErrMenuItemNotFound
 }

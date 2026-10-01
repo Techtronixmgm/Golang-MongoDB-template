@@ -1,6 +1,9 @@
 package services
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var (
 	ErrEmailAlreadyExists    = errors.New("email already exists")
@@ -37,7 +40,7 @@ var (
 	ErrInvalidMenuLocation   = errors.New("invalid menu location")
 	ErrInvalidMenuName       = errors.New("invalid menu name")
 	ErrInvalidMenuItem       = errors.New("invalid menu item")
-	ErrMenuDepthExceeded     = errors.New("menu nesting cannot exceed 2 levels")
+	ErrMenuDepthExceeded     = fmt.Errorf("menu nesting cannot exceed %d levels", maxMenuDepth)
 	ErrMenuItemNotFound      = errors.New("menu item not found")
 	ErrMenuItemOrderNotFound = errors.New("menu item order not found")
 
