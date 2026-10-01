@@ -75,9 +75,14 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	authHandler := handler.NewAuthHandler(authService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 	pageRepository := mongorepo.NewPageRepository(database)
+	menuRepository := mongorepo.NewMenuRepository(database)
+	menuService := services.NewMenuService(
+		menuRepository,
+		pageRepository,
+	)
 	pageService := services.NewPageService(pageRepository)
 	pageHandler := handler.NewPageHandler(pageService)
-
+	menuHandler := handler.NewMenuHandler(menuService)
 	settingsHandler := handler.NewSettingsHandler(settingsService)
 	// Global/Public Endpoints
 	r.GET("/health", func(c *gin.Context) {
@@ -149,17 +154,30 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	protectedSettings.PATCH("", settingsHandler.Update)
 
 	api := r.Group("/api/v1")
-	// Public / registered pages
+
+	// Public pages
 	api.GET("/pages/:slug", optionalAuthMiddleware, pageHandler.GetBySlug)
 
-	// Admin pages
+	// Public menus
+	api.GET("/menus/:location", menuHandler.GetPublicByLocation)
+
+	// Admin
 	admin := api.Group("/admin")
 	admin.Use(authMiddleware, auth.RequireRoles("admin"))
 
+	// Admin pages
 	admin.POST("/pages", pageHandler.Create)
 	admin.GET("/pages", pageHandler.List)
 	admin.PATCH("/pages/:id", pageHandler.Update)
 	admin.DELETE("/pages/:id", pageHandler.Delete)
+
+	// Admin menus
+	menus := admin.Group("/menus")
+	menus.POST("", menuHandler.Create)
+	menus.GET("", menuHandler.List)
+	menus.GET("/:id", menuHandler.Get)
+	// menus.PATCH("/:id", menuHandler.Update)
+	menus.DELETE("/:id", menuHandler.Delete)
 
 	return r
 }

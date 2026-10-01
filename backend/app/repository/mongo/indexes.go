@@ -131,14 +131,39 @@ func EnsurePageIndexes(
 			Options: options.Index().
 				SetName("page_visibility_created_at"),
 		},
-		// {
-		// 	Keys: bson.D{
-		// 		{Key: "author_id", Value: 1},
-		// 		{Key: "created_at", Value: -1},
-		// 	},
-		// 	Options: options.Index().
-		// 		SetName("page_author_created_at"),
-		// },
+		{
+			Keys: bson.D{
+				{Key: "author_id", Value: 1},
+				{Key: "created_at", Value: -1},
+			},
+			Options: options.Index().
+				SetName("page_author_created_at"),
+		},
+	}
+
+	_, err := collection.Indexes().CreateMany(ctx, indexes)
+
+	return err
+}
+
+func EnsureMenuIndexes(
+	ctx context.Context,
+	db *mongodriver.Database,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	collection := db.Collection("menus")
+
+	indexes := []mongodriver.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "location", Value: 1},
+			},
+			Options: options.Index().
+				SetUnique(true).
+				SetName("unique_menu_location"),
+		},
 	}
 
 	_, err := collection.Indexes().CreateMany(ctx, indexes)
