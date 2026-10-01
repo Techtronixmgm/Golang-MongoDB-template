@@ -1,7 +1,8 @@
 package dto
 
 type PublicSettingsResponse struct {
-	RegistrationEnabled bool `json:"registration_enabled"`
+	RegistrationEnabled bool   `json:"registration_enabled"`
+	LoginHint           string `json:"login_hint"`
 }
 
 type UpdateSettingsRequest struct {

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"basic-app/config"
 	"basic-app/models"
@@ -130,4 +131,59 @@ func (s *SettingsService) UpdateLoginIdentifiers(
 		altEmail,
 		updatedBy,
 	)
+}
+
+func (s *SettingsService) GetLoginHint(
+	ctx context.Context,
+) (string, error) {
+	settings, err := s.settingsRepository.Get(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	var identifiers []string
+
+	if settings.LoginWithPrimaryEmail {
+		identifiers = append(identifiers, "email")
+	}
+
+	if settings.LoginWithUsername {
+		identifiers = append(identifiers, "username")
+	}
+
+	if settings.LoginWithPhone {
+		identifiers = append(identifiers, "phone number")
+	}
+
+	if settings.LoginWithAltEmail {
+		identifiers = append(identifiers, "alternate email")
+	}
+
+	switch len(identifiers) {
+	case 1:
+		return "Enter " + identifiers[0], nil
+
+	case 2:
+		return "Enter " +
+			identifiers[0] +
+			" or " +
+			identifiers[1], nil
+
+	case 3:
+		return "Enter " +
+			identifiers[0] +
+			", " +
+			identifiers[1] +
+			" or " +
+			identifiers[2], nil
+
+	case 4:
+		return "Enter " +
+			strings.Join(identifiers[:3], ", ") +
+			" or " +
+			identifiers[3], nil
+
+	default:
+		return "Enter login identifier", nil
+	}
 }

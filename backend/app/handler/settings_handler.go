@@ -32,8 +32,19 @@ func (h *SettingsHandler) GetPublicSettings(c *gin.Context) {
 		return
 	}
 
+	loginHint, err := h.settingsService.GetLoginHint(
+		c.Request.Context(),
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to get public settings",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, dto.PublicSettingsResponse{
 		RegistrationEnabled: settings.RegistrationEnabled,
+		LoginHint:           loginHint,
 	})
 }
 
