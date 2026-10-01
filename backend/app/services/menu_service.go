@@ -446,3 +446,101 @@ func (s *MenuService) Delete(
 
 	return nil
 }
+
+func (s *MenuService) AddItem(
+	ctx context.Context,
+	id string,
+	req *dto.AddMenuItemRequest,
+) (*models.Menu, error) {
+	menu, err := s.menuRepository.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
+
+		return nil, err
+	}
+
+	label := strings.TrimSpace(req.Label)
+	if label == "" {
+		return nil, ErrInvalidMenuItem
+	}
+
+	if !isValidMenuItemType(req.Type) {
+		return nil, ErrInvalidMenuItem
+	}
+
+	item := models.MenuItem{
+		ID:            bson.NewObjectID(),
+		Label:         label,
+		Type:          req.Type,
+		URL:           strings.TrimSpace(req.URL),
+		Order:         len(menu.Items) + 1,
+		DisplayStatus: true,
+		Children:      make([]models.MenuItem, 0),
+	}
+
+	if req.DisplayStatus != nil {
+		item.DisplayStatus = *req.DisplayStatus
+	}
+
+	switch req.Type {
+	case models.MenuItemTypePage:
+		if req.PageID == nil || strings.TrimSpace(*req.PageID) == "" {
+			return nil, ErrInvalidMenuItem
+		}
+
+		pageID := strings.TrimSpace(*req.PageID)
+
+		_, err := s.pageRepository.FindByID(ctx, pageID)
+		if err != nil {
+			if errors.Is(err, ErrPageNotFound) {
+				return nil, ErrPageNotFound
+			}
+
+			return nil, err
+		}
+
+		objectID, err := bson.ObjectIDFromHex(pageID)
+		if err != nil {
+			return nil, ErrInvalidMenuItem
+		}
+
+		item.PageID = &objectID
+
+		if item.URL != "" {
+			return nil, ErrInvalidMenuItem
+		}
+
+	case models.MenuItemTypeURL:
+		if item.URL == "" {
+			return nil, ErrInvalidMenuItem
+		}
+
+		if req.PageID != nil {
+			return nil, ErrInvalidMenuItem
+		}
+
+	case models.MenuItemTypeGroup:
+		if item.URL != "" || req.PageID != nil {
+			return nil, ErrInvalidMenuItem
+		}
+	}
+
+	menu.Items = append(menu.Items, item)
+	menu.UpdatedAt = time.Now()
+
+	if err := s.menuRepository.Update(
+		ctx,
+		id,
+		menu,
+	); err != nil {
+		if errors.Is(err, ErrMenuNotFound) {
+			return nil, ErrMenuNotFound
+		}
+
+		return nil, err
+	}
+
+	return menu, nil
+}

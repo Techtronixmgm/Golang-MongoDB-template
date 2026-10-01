@@ -254,3 +254,48 @@ func (h *MenuHandler) Delete(c *gin.Context) {
 		"message": "menu deleted successfully",
 	})
 }
+
+func (h *MenuHandler) AddItem(c *gin.Context) {
+	menuID := c.Param("id")
+
+	var req dto.AddMenuItemRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request",
+		})
+		return
+	}
+
+	menu, err := h.menuService.AddItem(
+		c.Request.Context(),
+		menuID,
+		&req,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrMenuNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "menu not found",
+			})
+		case errors.Is(err, services.ErrPageNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "page not found",
+			})
+		case errors.Is(err, services.ErrInvalidMenuItem):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "invalid menu item",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "failed to add menu item",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "menu item added successfully",
+		"data":    menu,
+	})
+}
