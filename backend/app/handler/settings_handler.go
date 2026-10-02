@@ -127,6 +127,13 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 					"error": "2FA cannot be enabled because TOTP encryption key is too weak",
 				})
 
+			case errors.Is(err, config.ErrBackupCodeCountTooLow),
+				errors.Is(err, config.ErrBackupCodeLowThresholdTooLow),
+				errors.Is(err, config.ErrBackupCodeCountTooCloseToThreshold):
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "2FA cannot be enabled because the backup code configuration is invalid",
+				})
+
 			default:
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": "failed to update two-factor setting",

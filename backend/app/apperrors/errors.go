@@ -57,9 +57,4 @@ var (
 	ErrTwoFactorAlreadyEnabled  = errors.New("two-factor authentication is already enabled")
 	ErrInvalidBackupCode        = errors.New("invalid backup code")
 	ErrTwoFactorResetNotAllowed = errors.New("two-factor reset is not allowed for this user")
-
-	// backup code errors
-	ErrBackupCodeCountTooLow              = errors.New("backup code count must be at least 8")
-	ErrBackupCodeLowThresholdTooLow       = errors.New("backup code low threshold must be at least 4")
-	ErrBackupCodeCountTooCloseToThreshold = errors.New("backup code count must be at least 4 greater than backup code low threshold")
 )

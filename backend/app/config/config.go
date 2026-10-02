@@ -11,8 +11,11 @@ import (
 )
 
 var (
-	ErrTOTPEncryptionKeyMissing = errors.New("TOTP encryption key is required to enable 2FA")
-	ErrTOTPEncryptionKeyTooWeak = errors.New("TOTP encryption key must be at least 32 bytes")
+	ErrTOTPEncryptionKeyMissing           = errors.New("TOTP encryption key is required to enable 2FA")
+	ErrTOTPEncryptionKeyTooWeak           = errors.New("TOTP encryption key must be at least 32 bytes")
+	ErrBackupCodeCountTooLow              = errors.New("backup code count must be at least 8")
+	ErrBackupCodeLowThresholdTooLow       = errors.New("backup code low threshold must be at least 4")
+	ErrBackupCodeCountTooCloseToThreshold = errors.New("backup code count must be at least 4 greater than backup code low threshold")
 )
 
 type Config struct {
@@ -406,21 +409,15 @@ func (c Config) ValidateTOTPEncryptionKey() error {
 
 func (c Config) ValidateBackupCodeConfig() error {
 	if c.BackupCodeLowThreshold < 4 {
-		return errors.New(
-			"backup code low threshold must be at least 4",
-		)
+		return ErrBackupCodeLowThresholdTooLow
 	}
 
 	if c.BackupCodeCount < 8 {
-		return errors.New(
-			"backup code count must be at least 8",
-		)
+		return ErrBackupCodeCountTooLow
 	}
 
 	if c.BackupCodeCount < c.BackupCodeLowThreshold+4 {
-		return errors.New(
-			"backup code count must be at least 4 greater than backup code low threshold",
-		)
+		return ErrBackupCodeCountTooCloseToThreshold
 	}
 
 	return nil
