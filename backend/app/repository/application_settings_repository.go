@@ -12,4 +12,5 @@ type ApplicationSettingsRepository interface {
 	UpdateRegistrationEnabled(ctx context.Context, enabled bool, updatedBy string) error
 	UpdateTwoFactorEnabled(ctx context.Context, enabled bool, updatedBy string) error
 	UpdateLoginIdentifiers(ctx context.Context, primaryEmail bool, username bool, phone bool, altEmail bool, updatedBy string) error
+	UpdateMenuMaxDepth(ctx context.Context, top int, left int, bottom int, updatedBy string) error
 }

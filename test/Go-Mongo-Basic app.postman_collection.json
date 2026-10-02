@@ -651,7 +651,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "// {\n//     \"registration_enabled\" : true,\n//     \"two_factor_enabled\": false,\n//     \"login_with_primary_email\": true,\n//   \"login_with_username\": true,\n//   \"login_with_phone\": false,\n//   \"login_with_alt_email\": false\n// }\n\n{\n   \"login_with_username\": true\n}",
+                  "raw": "// {\n//     \"registration_enabled\" : true,\n//     \"two_factor_enabled\": false,\n//     \"login_with_primary_email\": true,\n//   \"login_with_username\": true,\n//   \"login_with_phone\": false,\n//   \"login_with_alt_email\": false,\n//   \"menu_max_depth\": {\n//     \"top\": 4,\n//     \"left\": 3,\n//     \"bottom\": 2\n//   }\n// }\n\n{\n  \"menu_max_depth\": {\n    \"top\": 3,\n    \"left\": 1,\n    \"bottom\": 2\n  }\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -876,7 +876,7 @@
                     "header": [],
                     "body": {
                       "mode": "raw",
-                      "raw": "\n\n\n{ \n    \"label\": \"Extra Extra Links\", \n    \"type\": \"group\", \n    // \"url\": \"https://en.wikipedia.org/wiki/Asa_Briggs\",\n     \"parentId\": \"6abe998f4b99ce51e7d48993\"\n}",
+                      "raw": "\n\n\n{ \n    \"label\": \"Extra Links\", \n    \"type\": \"group\",\n    // \"url\": \"https://en.wikipedia.org/wiki/Asa_Briggs\",\n   \"parentId\": \"6abf4388367f442e95f84f9e\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -884,7 +884,7 @@
                       }
                     },
                     "url": {
-                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b/items",
+                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abf42e3367f442e95f84f97/items",
                       "protocol": "http",
                       "host": [
                         "localhost"
@@ -895,7 +895,7 @@
                         "v1",
                         "admin",
                         "menus",
-                        "6abdfc3304e717d520cd107b",
+                        "6abf42e3367f442e95f84f97",
                         "items"
                       ]
                     },
@@ -910,7 +910,7 @@
                     "header": [],
                     "body": {
                       "mode": "raw",
-                      "raw": "// {\n//   \"label\": \"Our Story\",\n//   \"displayStatus\": false,\n//   \"type\": \"page\",\"group\",\"url\"\n//   \"url\": \"https://chatgpt.com\",\n//   \"pageId\": \"YOUR_HOME_PAGE_ID\"\n// }\n\n{\n    \"label\": \"Asa Briggs\",\n     \"type\": \"url\",\n      \"url\": \"https://en.wikipedia.org/wiki/Enigma_machine\"\n}",
+                      "raw": "// {\n//   \"label\": \"Our Story\",\n//   \"displayStatus\": false,\n//   \"type\": \"page\",\"group\",\"url\"\n//   \"url\": \"https://chatgpt.com\",\n//   \"pageId\": \"YOUR_HOME_PAGE_ID\"\n// }\n\n{\n    \"label\": \"Education\",\n     \"type\": \"group\",\n   //   \"url\": \"https://en.wikipedia.org/wiki/Enigma_machine\"\n   \"pageId\": \"YOUR_HOME_PAGE_ID\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -918,7 +918,7 @@
                       }
                     },
                     "url": {
-                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b/items/6abe99b61c2ad7d15bc3c54b",
+                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfcf804e717d520cd107e/items/6abe8a0b7a9a7851ff85005d",
                       "protocol": "http",
                       "host": [
                         "localhost"
@@ -929,9 +929,9 @@
                         "v1",
                         "admin",
                         "menus",
-                        "6abdfc3304e717d520cd107b",
+                        "6abdfcf804e717d520cd107e",
                         "items",
-                        "6abe99b61c2ad7d15bc3c54b"
+                        "6abe8a0b7a9a7851ff85005d"
                       ]
                     }
                   },
@@ -1015,7 +1015,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "//works only once to initialize\n\n{\n  \"name\": \"Bottom Menu\",\n  \"location\": \"bottom\", // top,bottom,left\n  \"status\": true,\n  \"items\": []\n}",
+                  "raw": "//works only once to initialize\n\n{\n  \"name\": \"Left menu\",\n  \"location\": \"left\", // top,bottom,left\n  \"status\": true\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1091,7 +1091,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6aba9b425dbbc2b3737071ed",
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abf3cc5a8b0c945d4bb739c",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -1102,7 +1102,7 @@
                     "v1",
                     "admin",
                     "menus",
-                    "6aba9b425dbbc2b3737071ed"
+                    "6abf3cc5a8b0c945d4bb739c"
                   ]
                 }
               },
@@ -1155,7 +1155,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6aba9b425dbbc2b3737071ed",
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -1166,7 +1166,7 @@
                     "v1",
                     "admin",
                     "menus",
-                    "6aba9b425dbbc2b3737071ed"
+                    "6abdfc3304e717d520cd107b"
                   ]
                 }
               },

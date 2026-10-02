@@ -155,6 +155,7 @@ func NewRouter(
 	menuService := services.NewMenuService(
 		menuRepository,
 		pageRepository,
+		settingsService,
 	)
 	pageService := services.NewPageService(pageRepository)
 	pageHandler := handler.NewPageHandler(pageService)

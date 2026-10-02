@@ -102,6 +102,17 @@ func (r *ApplicationSettingsRepository) EnsureDefaults(ctx context.Context) erro
 							"system",
 						},
 					},
+
+					"menu_max_depth": bson.M{
+						"$ifNull": bson.A{
+							"$menu_max_depth",
+							bson.M{
+								"top":    3,
+								"left":   2,
+								"bottom": 2,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -170,6 +181,30 @@ func (r *ApplicationSettingsRepository) UpdateLoginIdentifiers(
 				"login_with_alt_email":     altEmail,
 				"updated_at":               time.Now().UTC(),
 				"updated_by":               updatedBy,
+			},
+		},
+	)
+
+	return err
+}
+
+func (r *ApplicationSettingsRepository) UpdateMenuMaxDepth(
+	ctx context.Context,
+	top int,
+	left int,
+	bottom int,
+	updatedBy string,
+) error {
+	_, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": models.ApplicationSettingsID},
+		bson.M{
+			"$set": bson.M{
+				"menu_max_depth.top":    top,
+				"menu_max_depth.left":   left,
+				"menu_max_depth.bottom": bottom,
+				"updated_at":            time.Now().UTC(),
+				"updated_by":            updatedBy,
 			},
 		},
 	)

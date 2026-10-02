@@ -113,3 +113,37 @@ Public menu retrieval does not require administrator access.
 ## Design
 
 Menu items are embedded within the menu document. This keeps menu management simple and allows an entire menu hierarchy to be managed as a single structure.
+
+# Menu Settings
+
+Menu nesting depth can be configured separately for each menu location through Application Settings.
+
+## Maximum Depth
+
+| Location | Default |
+|---|---:|
+| Top | 3 |
+| Left | 2 |
+| Bottom | 2 |
+
+Example:
+
+```json
+{
+  "menu_max_depth": {
+    "top": 3,
+    "left": 2,
+    "bottom": 2
+  }
+}
+```
+
+### Behavior
+
+The configured depth controls how deeply new menu items can be nested.
+
+Changing the maximum depth does **not** modify or remove existing menu items.
+
+For example, if the Top menu currently allows 3 levels and is changed to 2, existing level-3 items remain unchanged. New items cannot be added beyond level 2.
+
+A minimum depth of `1` is required for each menu location.

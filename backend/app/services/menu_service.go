@@ -13,40 +13,21 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-const (
-	maxTopMenuDepth    = 3
-	maxLeftMenuDepth   = 2
-	maxBottomMenuDepth = 2
-)
-
-func getMaxMenuDepth(location models.MenuLocation) int {
-	switch location {
-	case models.MenuLocationTop:
-		return maxTopMenuDepth
-
-	case models.MenuLocationLeft:
-		return maxLeftMenuDepth
-
-	case models.MenuLocationBottom:
-		return maxBottomMenuDepth
-
-	default:
-		return 0
-	}
-}
-
 type MenuService struct {
-	menuRepository repository.MenuRepository
-	pageRepository repository.PageRepository
+	menuRepository  repository.MenuRepository
+	pageRepository  repository.PageRepository
+	settingsService *SettingsService
 }
 
 func NewMenuService(
 	menuRepository repository.MenuRepository,
 	pageRepository repository.PageRepository,
+	settingsService *SettingsService,
 ) *MenuService {
 	return &MenuService{
-		menuRepository: menuRepository,
-		pageRepository: pageRepository,
+		menuRepository:  menuRepository,
+		pageRepository:  pageRepository,
+		settingsService: settingsService,
 	}
 }
 
@@ -415,10 +396,11 @@ func (s *MenuService) AddItem(
 		}
 	}
 
+	// Top-level item.
 	if req.ParentID == nil || strings.TrimSpace(*req.ParentID) == "" {
 		item.Order = len(menu.Items) + 1
-
 		menu.Items = append(menu.Items, item)
+
 	} else {
 		parentID := strings.TrimSpace(*req.ParentID)
 
@@ -446,8 +428,31 @@ func (s *MenuService) AddItem(
 			return nil, ErrInvalidMenuItem
 		}
 
-		maxDepth := getMaxMenuDepth(menu.Location)
+		// Get the configured maximum depth.
+		maxDepthSettings, err := s.settingsService.GetMenuMaxDepth(ctx)
+		if err != nil {
+			return nil, err
+		}
 
+		var maxDepth int
+
+		switch menu.Location {
+		case models.MenuLocationTop:
+			maxDepth = maxDepthSettings.Top
+
+		case models.MenuLocationLeft:
+			maxDepth = maxDepthSettings.Left
+
+		case models.MenuLocationBottom:
+			maxDepth = maxDepthSettings.Bottom
+
+		default:
+			return nil, ErrInvalidMenuItem
+		}
+
+		// location.Depth is the depth of the parent.
+		// If parent is already at the maximum depth,
+		// another child cannot be added.
 		if location.Depth >= maxDepth {
 			return nil, fmt.Errorf(
 				"%w: %s menu cannot exceed %d levels",
@@ -894,4 +899,23 @@ func findMenuItemLocation(
 	}
 
 	return nil, ErrMenuItemNotFound
+}
+
+func getMenuMaxDepth(
+	location models.MenuLocation,
+	settings models.MenuMaxDepthSettings,
+) (int, error) {
+	switch location {
+	case models.MenuLocationTop:
+		return settings.Top, nil
+
+	case models.MenuLocationLeft:
+		return settings.Left, nil
+
+	case models.MenuLocationBottom:
+		return settings.Bottom, nil
+
+	default:
+		return 0, ErrInvalidMenuItem
+	}
 }

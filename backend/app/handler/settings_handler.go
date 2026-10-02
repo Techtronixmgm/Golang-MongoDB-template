@@ -64,6 +64,11 @@ func (h *SettingsHandler) GetPrivateSettings(c *gin.Context) {
 		LoginWithUsername:     settings.LoginWithUsername,
 		LoginWithPhone:        settings.LoginWithPhone,
 		LoginWithAltEmail:     settings.LoginWithAltEmail,
+		MenuMaxDepth: dto.MenuMaxDepthResponse{
+			Top:    settings.MenuMaxDepth.Top,
+			Left:   settings.MenuMaxDepth.Left,
+			Bottom: settings.MenuMaxDepth.Bottom,
+		},
 	})
 }
 
@@ -82,7 +87,8 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 		req.LoginWithPrimaryEmail == nil &&
 		req.LoginWithUsername == nil &&
 		req.LoginWithPhone == nil &&
-		req.LoginWithAltEmail == nil {
+		req.LoginWithAltEmail == nil &&
+		req.MenuMaxDepth == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "no settings to update",
 		})
@@ -173,6 +179,47 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 			username,
 			phone,
 			altEmail,
+			actorID,
+		); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+	}
+
+	if req.MenuMaxDepth != nil {
+		settings, err := h.settingsService.GetSettings(
+			c.Request.Context(),
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to load menu depth settings",
+			})
+			return
+		}
+
+		top := settings.MenuMaxDepth.Top
+		left := settings.MenuMaxDepth.Left
+		bottom := settings.MenuMaxDepth.Bottom
+
+		if req.MenuMaxDepth.Top != nil {
+			top = *req.MenuMaxDepth.Top
+		}
+
+		if req.MenuMaxDepth.Left != nil {
+			left = *req.MenuMaxDepth.Left
+		}
+
+		if req.MenuMaxDepth.Bottom != nil {
+			bottom = *req.MenuMaxDepth.Bottom
+		}
+
+		if err := h.settingsService.UpdateMenuMaxDepth(
+			c.Request.Context(),
+			top,
+			left,
+			bottom,
 			actorID,
 		); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{

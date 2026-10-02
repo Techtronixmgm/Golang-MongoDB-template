@@ -103,7 +103,7 @@ func (r *MenuRepository) List(
 
 	defer cursor.Close(ctx)
 
-	var menus []*models.Menu
+	menus := make([]*models.Menu, 0)
 
 	if err := cursor.All(ctx, &menus); err != nil {
 		return nil, err

@@ -187,3 +187,36 @@ func (s *SettingsService) GetLoginHint(
 		return "Enter login identifier", nil
 	}
 }
+
+func (s *SettingsService) GetMenuMaxDepth(
+	ctx context.Context,
+) (models.MenuMaxDepthSettings, error) {
+	settings, err := s.settingsRepository.Get(ctx)
+	if err != nil {
+		return models.MenuMaxDepthSettings{}, err
+	}
+
+	return settings.MenuMaxDepth, nil
+}
+
+func (s *SettingsService) UpdateMenuMaxDepth(
+	ctx context.Context,
+	top int,
+	left int,
+	bottom int,
+	updatedBy string,
+) error {
+	if top < 1 || left < 1 || bottom < 1 {
+		return errors.New(
+			"menu max depth must be at least 1 for every location",
+		)
+	}
+
+	return s.settingsRepository.UpdateMenuMaxDepth(
+		ctx,
+		top,
+		left,
+		bottom,
+		updatedBy,
+	)
+}
