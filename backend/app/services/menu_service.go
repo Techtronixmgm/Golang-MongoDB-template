@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -718,6 +719,13 @@ func (s *MenuService) DeleteItem(
 		(*items)[:location.Index],
 		(*items)[location.Index+1:]...,
 	)
+
+	// Restore logical order before resequencing.
+	sort.Slice(*items, func(i, j int) bool {
+		return (*items)[i].Order < (*items)[j].Order
+	})
+
+	// Normalize Order values.
 
 	for i := range *items {
 		(*items)[i].Order = i + 1
