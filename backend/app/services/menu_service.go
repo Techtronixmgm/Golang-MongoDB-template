@@ -6,6 +6,7 @@ import (
 	"basic-app/repository"
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -448,7 +449,12 @@ func (s *MenuService) AddItem(
 		maxDepth := getMaxMenuDepth(menu.Location)
 
 		if location.Depth >= maxDepth {
-			return nil, ErrMenuDepthExceeded
+			return nil, fmt.Errorf(
+				"%w: %s menu cannot exceed %d levels",
+				ErrMenuDepthExceeded,
+				menu.Location,
+				maxDepth,
+			)
 		}
 
 		item.Order = len(parent.Children) + 1
