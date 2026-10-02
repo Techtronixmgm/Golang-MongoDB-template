@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"basic-app/apperrors"
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/repository"
@@ -32,17 +33,17 @@ func (s *PageService) Create(
 	page.Content = strings.TrimSpace(page.Content)
 
 	if page.Title == "" || page.Content == "" {
-		return ErrInvalidPageContent
+		return apperrors.ErrInvalidPageContent
 	}
 
 	if !isValidPageVisibility(page.Visibility) {
-		return ErrInvalidVisibility
+		return apperrors.ErrInvalidVisibility
 	}
 
 	slug := utils.Slugify(page.Title)
 
 	if slug == "" {
-		return ErrInvalidSlug
+		return apperrors.ErrInvalidSlug
 	}
 
 	slug, err := s.generateUniqueSlug(ctx, slug, "")
@@ -69,7 +70,7 @@ func (s *PageService) GetBySlug(
 	slug = strings.TrimSpace(slug)
 
 	if slug == "" {
-		return nil, ErrPageNotFound
+		return nil, apperrors.ErrPageNotFound
 	}
 
 	return s.pageRepository.FindBySlug(ctx, slug)
@@ -86,7 +87,7 @@ func (s *PageService) List(
 	}
 
 	if page < 1 {
-		return nil, 0, 0, 0, ErrInvalidPage
+		return nil, 0, 0, 0, apperrors.ErrInvalidPage
 	}
 
 	limit := opts.Limit
@@ -96,12 +97,12 @@ func (s *PageService) List(
 	}
 
 	if limit < 1 || limit > 100 {
-		return nil, 0, 0, 0, ErrInvalidLimit
+		return nil, 0, 0, 0, apperrors.ErrInvalidLimit
 	}
 
 	if opts.Visibility != nil &&
 		!isValidPageVisibility(*opts.Visibility) {
-		return nil, 0, 0, 0, ErrInvalidVisibility
+		return nil, 0, 0, 0, apperrors.ErrInvalidVisibility
 	}
 
 	pages, total, err := s.pageRepository.List(
@@ -158,7 +159,7 @@ func (s *PageService) Update(
 			slug = utils.Slugify(page.Title)
 
 			if slug == "" {
-				return nil, ErrInvalidSlug
+				return nil, apperrors.ErrInvalidSlug
 			}
 
 			// Automatically generated slug can use suffixes.
@@ -180,13 +181,13 @@ func (s *PageService) Update(
 			)
 
 			if err != nil {
-				if !errors.Is(err, ErrPageNotFound) {
+				if !errors.Is(err, apperrors.ErrPageNotFound) {
 					return nil, err
 				}
 			} else {
 				// Another page already owns this slug.
 				if existingPage.ID.Hex() != page.ID.Hex() {
-					return nil, ErrSlugAlreadyExists
+					return nil, apperrors.ErrSlugAlreadyExists
 				}
 			}
 
@@ -195,11 +196,11 @@ func (s *PageService) Update(
 	}
 
 	if page.Title == "" || page.Content == "" {
-		return nil, ErrInvalidPageContent
+		return nil, apperrors.ErrInvalidPageContent
 	}
 
 	if !isValidPageVisibility(page.Visibility) {
-		return nil, ErrInvalidVisibility
+		return nil, apperrors.ErrInvalidVisibility
 	}
 
 	if err := s.pageRepository.Update(
@@ -240,7 +241,7 @@ func (s *PageService) generateUniqueSlug(
 	excludeID string,
 ) (string, error) {
 	if baseSlug == "" {
-		return "", ErrInvalidSlug
+		return "", apperrors.ErrInvalidSlug
 	}
 
 	slug := baseSlug
@@ -249,7 +250,7 @@ func (s *PageService) generateUniqueSlug(
 		page, err := s.pageRepository.FindBySlug(ctx, slug)
 
 		if err != nil {
-			if errors.Is(err, ErrPageNotFound) {
+			if errors.Is(err, apperrors.ErrPageNotFound) {
 				return slug, nil
 			}
 

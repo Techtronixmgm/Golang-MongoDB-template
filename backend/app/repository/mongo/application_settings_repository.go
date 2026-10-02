@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"basic-app/apperrors"
 	"basic-app/models"
 	"basic-app/repository"
-	"basic-app/services"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -36,7 +36,7 @@ func (r *ApplicationSettingsRepository) Get(ctx context.Context) (*models.Applic
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, services.ErrApplicationSettingsNotFound
+			return nil, apperrors.ErrApplicationSettingsNotFound
 		}
 
 		return nil, err

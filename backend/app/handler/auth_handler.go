@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"basic-app/apperrors"
 	"basic-app/config"
 	"basic-app/dto"
 	"basic-app/services"
@@ -48,12 +49,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrEmailAlreadyExists):
+		case errors.Is(err, apperrors.ErrEmailAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrUsernameAlreadyExists):
+		case errors.Is(err, apperrors.ErrUsernameAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": err.Error(),
 			})
@@ -117,12 +118,12 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidPassword):
+		case errors.Is(err, apperrors.ErrInvalidPassword):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "current password is incorrect",
 			})
 
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
 			})
@@ -156,7 +157,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		&req,
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrInvalidCredentials) {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid credentials",
 			})
@@ -245,7 +246,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		refreshToken,
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrInvalidRefreshToken) {
+		if errors.Is(err, apperrors.ErrInvalidRefreshToken) {
 			h.clearAuthCookies(c)
 
 			c.JSON(http.StatusUnauthorized, gin.H{
@@ -309,7 +310,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		)
 
 		if err != nil &&
-			!errors.Is(err, services.ErrInvalidRefreshToken) {
+			!errors.Is(err, apperrors.ErrInvalidRefreshToken) {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "unable to logout",
 			})
@@ -348,17 +349,17 @@ func (h *AuthHandler) StartTwoFactorSetup(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrTwoFactorAlreadyEnabled):
+		case errors.Is(err, apperrors.ErrTwoFactorAlreadyEnabled):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
 			})
 
-		case errors.Is(err, services.ErrInvalidCredentials):
+		case errors.Is(err, apperrors.ErrInvalidCredentials):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
 			})
@@ -414,27 +415,27 @@ func (h *AuthHandler) VerifyTwoFactorSetup(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrTwoFactorAlreadyEnabled):
+		case errors.Is(err, apperrors.ErrTwoFactorAlreadyEnabled):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrTwoFactorSetupNotStarted):
+		case errors.Is(err, apperrors.ErrTwoFactorSetupNotStarted):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrInvalidTOTPCode):
+		case errors.Is(err, apperrors.ErrInvalidTOTPCode):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid TOTP code",
 			})
 
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
 			})
 
-		case errors.Is(err, services.ErrInvalidCredentials):
+		case errors.Is(err, apperrors.ErrInvalidCredentials):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
 			})
@@ -472,7 +473,7 @@ func (h *AuthHandler) VerifyTwoFactorLogin(c *gin.Context) {
 		&req,
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrInvalidTOTPCode) {
+		if errors.Is(err, apperrors.ErrInvalidTOTPCode) {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid two-factor code",
 			})
@@ -527,22 +528,22 @@ func (h *AuthHandler) DisableTwoFactor(c *gin.Context) {
 		req.Code,
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrInvalidTOTPCode) {
+		if errors.Is(err, apperrors.ErrInvalidTOTPCode) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid two-factor code",
 			})
 			return
 		}
 
-		if errors.Is(err, services.ErrTwoFactorNotEnabled) {
+		if errors.Is(err, apperrors.ErrTwoFactorNotEnabled) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "two-factor authentication is not enabled",
 			})
 			return
 		}
 
-		if errors.Is(err, services.ErrInvalidUserID) ||
-			errors.Is(err, services.ErrInvalidCredentials) {
+		if errors.Is(err, apperrors.ErrInvalidUserID) ||
+			errors.Is(err, apperrors.ErrInvalidCredentials) {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
 			})
@@ -580,19 +581,19 @@ func (h *AuthHandler) RegenerateBackupCodes(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrTwoFactorNotEnabled):
+		case errors.Is(err, apperrors.ErrTwoFactorNotEnabled):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "two-factor authentication is not enabled",
 			})
 
-		case errors.Is(err, services.ErrInvalidTOTPCode),
-			errors.Is(err, services.ErrInvalidBackupCode):
+		case errors.Is(err, apperrors.ErrInvalidTOTPCode),
+			errors.Is(err, apperrors.ErrInvalidBackupCode):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid two-factor code",
 			})
 
-		case errors.Is(err, services.ErrInvalidUserID),
-			errors.Is(err, services.ErrInvalidCredentials):
+		case errors.Is(err, apperrors.ErrInvalidUserID),
+			errors.Is(err, apperrors.ErrInvalidCredentials):
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "unauthorized",
 			})
@@ -630,17 +631,17 @@ func (h *AuthHandler) AdminResetTwoFactor(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid user ID",
 			})
 
-		case errors.Is(err, services.ErrTwoFactorNotEnabled):
+		case errors.Is(err, apperrors.ErrTwoFactorNotEnabled):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "two-factor authentication is not enabled",
 			})
 
-		case errors.Is(err, services.ErrTwoFactorResetNotAllowed):
+		case errors.Is(err, apperrors.ErrTwoFactorResetNotAllowed):
 			c.JSON(http.StatusForbidden, gin.H{
 				"error": "two-factor authentication cannot be reset for admin accounts",
 			})

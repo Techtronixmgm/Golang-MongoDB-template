@@ -1,8 +1,8 @@
 package mongo
 
 import (
+	"basic-app/apperrors"
 	"basic-app/models"
-	"basic-app/services"
 	"context"
 	"errors"
 
@@ -38,7 +38,7 @@ func (r *MenuRepository) FindByID(
 ) (*models.Menu, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, services.ErrMenuNotFound
+		return nil, apperrors.ErrMenuNotFound
 	}
 
 	var menu models.Menu
@@ -52,7 +52,7 @@ func (r *MenuRepository) FindByID(
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, services.ErrMenuNotFound
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -76,7 +76,7 @@ func (r *MenuRepository) FindByLocation(
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, services.ErrMenuNotFound
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -119,7 +119,7 @@ func (r *MenuRepository) Update(
 ) error {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return services.ErrMenuNotFound
+		return apperrors.ErrMenuNotFound
 	}
 
 	result, err := r.collection.ReplaceOne(
@@ -134,7 +134,7 @@ func (r *MenuRepository) Update(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrMenuNotFound
+		return apperrors.ErrMenuNotFound
 	}
 
 	return nil
@@ -146,7 +146,7 @@ func (r *MenuRepository) Delete(
 ) error {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return services.ErrMenuNotFound
+		return apperrors.ErrMenuNotFound
 	}
 
 	result, err := r.collection.DeleteOne(
@@ -161,7 +161,7 @@ func (r *MenuRepository) Delete(
 	}
 
 	if result.DeletedCount == 0 {
-		return services.ErrMenuNotFound
+		return apperrors.ErrMenuNotFound
 	}
 
 	return nil

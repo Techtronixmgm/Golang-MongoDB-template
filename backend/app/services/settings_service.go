@@ -74,6 +74,10 @@ func (s *SettingsService) UpdateTwoFactorEnabled(
 		if err := s.config.ValidateTOTPEncryptionKey(); err != nil {
 			return err
 		}
+
+		if err := s.config.ValidateBackupCodeConfig(); err != nil {
+			return err
+		}
 	}
 
 	return s.settingsRepository.UpdateTwoFactorEnabled(
@@ -99,9 +103,9 @@ func (s *SettingsService) ValidateTwoFactorStartupConfig(
 		return err
 	}
 
-	if err := s.config.ValidateBackupCodeConfig(); err != nil {
-		return err
-	}
+	// if err := s.config.ValidateBackupCodeConfig(); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }

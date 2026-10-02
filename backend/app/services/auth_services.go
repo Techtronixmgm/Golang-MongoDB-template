@@ -1,6 +1,7 @@
 package services
 
 import (
+	"basic-app/apperrors"
 	"basic-app/auth"
 	"basic-app/config"
 
@@ -57,7 +58,7 @@ func (s *AuthService) RegisterUser(
 	}
 
 	if !registrationEnabled {
-		return nil, ErrRegistrationDisabled
+		return nil, apperrors.ErrRegistrationDisabled
 	}
 
 	firstName, err := validation.ValidateName(
@@ -92,7 +93,7 @@ func (s *AuthService) RegisterUser(
 	}
 
 	if altEmail != "" && altEmail == email {
-		return nil, ErrAltEmailSameAsEmail
+		return nil, apperrors.ErrAltEmailSameAsEmail
 	}
 
 	phone, err := validation.ValidatePhone(req.Phone)
@@ -107,10 +108,10 @@ func (s *AuthService) RegisterUser(
 	// Checks primary email against both email and alternate-email fields.
 	existingUser, err := s.userRepository.FindByAnyEmail(ctx, email)
 	if err == nil && existingUser != nil {
-		return nil, ErrEmailAlreadyExists
+		return nil, apperrors.ErrEmailAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
+	if err != nil && !errors.Is(err, apperrors.ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -121,12 +122,12 @@ func (s *AuthService) RegisterUser(
 			altEmail,
 		)
 		if err == nil && existingUser != nil {
-			return nil, ErrAltEmailAlreadyExists
+			return nil, apperrors.ErrAltEmailAlreadyExists
 		}
 
 		if err != nil && !errors.Is(
 			err,
-			ErrUserNotFound,
+			apperrors.ErrUserNotFound,
 		) {
 			return nil, err
 		}
@@ -134,19 +135,19 @@ func (s *AuthService) RegisterUser(
 
 	existingUser, err = s.userRepository.FindByUsername(ctx, username)
 	if err == nil && existingUser != nil {
-		return nil, ErrUsernameAlreadyExists
+		return nil, apperrors.ErrUsernameAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
+	if err != nil && !errors.Is(err, apperrors.ErrUserNotFound) {
 		return nil, err
 	}
 
 	existingUser, err = s.userRepository.FindByPhone(ctx, phone)
 	if err == nil && existingUser != nil {
-		return nil, ErrPhoneAlreadyExists
+		return nil, apperrors.ErrPhoneAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
+	if err != nil && !errors.Is(err, apperrors.ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -187,7 +188,7 @@ func (s *AuthService) ChangePassword(
 
 	userID = strings.TrimSpace(userID)
 	if userID == "" {
-		return ErrInvalidUserID
+		return apperrors.ErrInvalidUserID
 	}
 
 	// Do not trim passwords.
@@ -208,7 +209,7 @@ func (s *AuthService) ChangePassword(
 		[]byte(user.PasswordHash),
 		[]byte(currentPassword),
 	); err != nil {
-		return ErrInvalidPassword
+		return apperrors.ErrInvalidPassword
 	}
 
 	// Hash the new password.
@@ -236,7 +237,7 @@ func (s *AuthService) Login(
 	)
 
 	if identifier == "" || req.Password == "" {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	user, err := s.userRepository.FindByLoginIdentifier(
@@ -245,8 +246,8 @@ func (s *AuthService) Login(
 	)
 
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
-			return nil, ErrInvalidCredentials
+		if errors.Is(err, apperrors.ErrUserNotFound) {
+			return nil, apperrors.ErrInvalidCredentials
 		}
 
 		return nil, err
@@ -274,18 +275,18 @@ func (s *AuthService) Login(
 	}
 
 	if !loginAllowed {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	if !user.Status {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
 		[]byte(user.PasswordHash),
 		[]byte(req.Password),
 	); err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	twoFactorEnabled, err := s.settingsService.IsTwoFactorEnabled(ctx)
@@ -363,23 +364,23 @@ func (s *AuthService) Login(
 func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*dto.RefreshResult, error) {
 	claims, err := auth.ValidateRefreshToken(refreshToken, s.config.JWTSecret)
 	if err != nil {
-		return nil, ErrInvalidRefreshToken
+		return nil, apperrors.ErrInvalidRefreshToken
 	}
 
 	user, err := s.userRepository.FindByID(ctx, claims.UserID)
 	if err != nil {
-		return nil, ErrInvalidRefreshToken
+		return nil, apperrors.ErrInvalidRefreshToken
 	}
 
 	if !user.Status {
-		return nil, ErrInvalidRefreshToken
+		return nil, apperrors.ErrInvalidRefreshToken
 	}
 
 	tokenHash := auth.HashRefreshToken(refreshToken)
 
 	storedToken, err := s.refreshTokenRepository.FindByTokenHash(ctx, tokenHash)
 	if err != nil {
-		return nil, ErrInvalidRefreshToken
+		return nil, apperrors.ErrInvalidRefreshToken
 	}
 
 	accessToken, err := auth.GenerateToken(
@@ -406,19 +407,19 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*d
 func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	claims, err := auth.ValidateRefreshToken(refreshToken, s.config.JWTSecret)
 	if err != nil {
-		return ErrInvalidRefreshToken
+		return apperrors.ErrInvalidRefreshToken
 	}
 
 	// Make sure the user still exists.
 	if _, err := s.userRepository.FindByID(ctx, claims.UserID); err != nil {
-		return ErrInvalidRefreshToken
+		return apperrors.ErrInvalidRefreshToken
 	}
 
 	tokenHash := auth.HashRefreshToken(refreshToken)
 
 	storedToken, err := s.refreshTokenRepository.FindByTokenHash(ctx, tokenHash)
 	if err != nil {
-		return ErrInvalidRefreshToken
+		return apperrors.ErrInvalidRefreshToken
 	}
 
 	return s.refreshTokenRepository.Revoke(ctx, storedToken.ID.Hex())
@@ -432,7 +433,7 @@ func (s *AuthService) VerifyTwoFactorLogin(
 	code := strings.TrimSpace(req.Code)
 
 	if challenge == "" || code == "" {
-		return nil, ErrInvalidTOTPCode
+		return nil, apperrors.ErrInvalidTOTPCode
 	}
 
 	claims, err := auth.ValidateTwoFactorChallenge(
@@ -440,7 +441,7 @@ func (s *AuthService) VerifyTwoFactorLogin(
 		s.config.JWTSecret,
 	)
 	if err != nil {
-		return nil, ErrInvalidTOTPCode
+		return nil, apperrors.ErrInvalidTOTPCode
 	}
 
 	user, err := s.userRepository.FindByID(
@@ -448,15 +449,15 @@ func (s *AuthService) VerifyTwoFactorLogin(
 		claims.UserID,
 	)
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
-			return nil, ErrInvalidCredentials
+		if errors.Is(err, apperrors.ErrUserNotFound) {
+			return nil, apperrors.ErrInvalidCredentials
 		}
 
 		return nil, err
 	}
 
 	if !user.Status || !user.TwoFactorEnabled {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	backupCodesRemaining := len(user.BackupCodeHashes)
@@ -467,14 +468,14 @@ func (s *AuthService) VerifyTwoFactorLogin(
 			user.TwoFactorSecret,
 		)
 		if err != nil {
-			return nil, ErrInvalidTOTPCode
+			return nil, apperrors.ErrInvalidTOTPCode
 		}
 
 		if err := s.totpService.VerifyCode(
 			decryptedSecret,
 			code,
 		); err != nil {
-			return nil, ErrInvalidTOTPCode
+			return nil, apperrors.ErrInvalidTOTPCode
 		}
 	} else {
 		backupCodesRemaining, err = s.verifyBackupCode(
@@ -483,7 +484,7 @@ func (s *AuthService) VerifyTwoFactorLogin(
 			code,
 		)
 		if err != nil {
-			return nil, ErrInvalidTOTPCode
+			return nil, apperrors.ErrInvalidTOTPCode
 		}
 
 		backupCodesLow = backupCodesRemaining <= 4
@@ -551,7 +552,7 @@ func (s *AuthService) verifyBackupCode(
 	code = strings.ToUpper(strings.TrimSpace(code))
 
 	if code == "" {
-		return 0, ErrInvalidBackupCode
+		return 0, apperrors.ErrInvalidBackupCode
 	}
 
 	for index, hash := range user.BackupCodeHashes {
@@ -574,5 +575,5 @@ func (s *AuthService) verifyBackupCode(
 		return len(user.BackupCodeHashes), nil
 	}
 
-	return 0, ErrInvalidBackupCode
+	return 0, apperrors.ErrInvalidBackupCode
 }

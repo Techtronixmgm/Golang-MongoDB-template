@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"basic-app/apperrors"
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/services"
@@ -38,22 +39,22 @@ func (h *MenuHandler) Create(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidMenuName),
-			errors.Is(err, services.ErrInvalidMenuLocation),
-			errors.Is(err, services.ErrInvalidMenuItem),
-			errors.Is(err, services.ErrMenuDepthExceeded):
+		case errors.Is(err, apperrors.ErrInvalidMenuName),
+			errors.Is(err, apperrors.ErrInvalidMenuLocation),
+			errors.Is(err, apperrors.ErrInvalidMenuItem),
+			errors.Is(err, apperrors.ErrMenuDepthExceeded):
 
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrMenuAlreadyExists):
+		case errors.Is(err, apperrors.ErrMenuAlreadyExists):
 
 			c.JSON(http.StatusConflict, gin.H{
 				"error": "menu already exists for this location",
 			})
 
-		case errors.Is(err, services.ErrPageNotFound):
+		case errors.Is(err, apperrors.ErrPageNotFound):
 
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "referenced page not found",
@@ -84,7 +85,7 @@ func (h *MenuHandler) Get(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
@@ -140,12 +141,12 @@ func (h *MenuHandler) Update(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
 			})
 
-		case errors.Is(err, services.ErrInvalidMenuName):
+		case errors.Is(err, apperrors.ErrInvalidMenuName):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -176,19 +177,19 @@ func (h *MenuHandler) GetPublicByLocation(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidMenuLocation):
+		case errors.Is(err, apperrors.ErrInvalidMenuLocation):
 
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid menu location",
 			})
 
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
 			})
 
-		case errors.Is(err, services.ErrMenuInactive):
+		case errors.Is(err, apperrors.ErrMenuInactive):
 
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu is inactive",
@@ -218,7 +219,7 @@ func (h *MenuHandler) Delete(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
 			})
@@ -256,27 +257,27 @@ func (h *MenuHandler) AddItem(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"message": "menu not found",
 			})
 
-		case errors.Is(err, services.ErrMenuItemNotFound):
+		case errors.Is(err, apperrors.ErrMenuItemNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"message": "menu item not found",
 			})
 
-		case errors.Is(err, services.ErrPageNotFound):
+		case errors.Is(err, apperrors.ErrPageNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"message": "page not found",
 			})
 
-		case errors.Is(err, services.ErrMenuDepthExceeded):
+		case errors.Is(err, apperrors.ErrMenuDepthExceeded):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrInvalidMenuItem):
+		case errors.Is(err, apperrors.ErrInvalidMenuItem):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"message": "invalid menu item",
 			})
@@ -317,22 +318,22 @@ func (h *MenuHandler) UpdateItem(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
 			})
 
-		case errors.Is(err, services.ErrMenuItemNotFound):
+		case errors.Is(err, apperrors.ErrMenuItemNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu item not found",
 			})
 
-		case errors.Is(err, services.ErrPageNotFound):
+		case errors.Is(err, apperrors.ErrPageNotFound):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "referenced page not found",
 			})
 
-		case errors.Is(err, services.ErrInvalidMenuItem):
+		case errors.Is(err, apperrors.ErrInvalidMenuItem):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -363,12 +364,12 @@ func (h *MenuHandler) DeleteItem(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
 			})
 
-		case errors.Is(err, services.ErrMenuItemNotFound):
+		case errors.Is(err, apperrors.ErrMenuItemNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu item not found",
 			})
@@ -408,17 +409,17 @@ func (h *MenuHandler) MoveItem(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrMenuNotFound):
+		case errors.Is(err, apperrors.ErrMenuNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu not found",
 			})
 
-		case errors.Is(err, services.ErrMenuItemNotFound):
+		case errors.Is(err, apperrors.ErrMenuItemNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "menu item not found",
 			})
 
-		case errors.Is(err, services.ErrMenuItemOrderNotFound):
+		case errors.Is(err, apperrors.ErrMenuItemOrderNotFound):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "menu item order not found",
 			})

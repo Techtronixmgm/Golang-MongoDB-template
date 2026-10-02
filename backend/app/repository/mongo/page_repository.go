@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"basic-app/apperrors"
 	"basic-app/models"
 	"basic-app/repository"
-	"basic-app/services"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -52,7 +52,7 @@ func (r *PageRepository) FindByID(
 ) (*models.Page, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, services.ErrPageNotFound
+		return nil, apperrors.ErrPageNotFound
 	}
 
 	var page models.Page
@@ -64,7 +64,7 @@ func (r *PageRepository) FindByID(
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, services.ErrPageNotFound
+			return nil, apperrors.ErrPageNotFound
 		}
 
 		return nil, err
@@ -86,7 +86,7 @@ func (r *PageRepository) FindBySlug(
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, services.ErrPageNotFound
+			return nil, apperrors.ErrPageNotFound
 		}
 
 		return nil, err
@@ -151,7 +151,7 @@ func (r *PageRepository) Update(
 ) error {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return services.ErrPageNotFound
+		return apperrors.ErrPageNotFound
 	}
 
 	page.UpdatedAt = time.Now().UTC()
@@ -175,7 +175,7 @@ func (r *PageRepository) Update(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrPageNotFound
+		return apperrors.ErrPageNotFound
 	}
 
 	return nil
@@ -187,7 +187,7 @@ func (r *PageRepository) Delete(
 ) error {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return services.ErrPageNotFound
+		return apperrors.ErrPageNotFound
 	}
 
 	result, err := r.collection.DeleteOne(
@@ -200,7 +200,7 @@ func (r *PageRepository) Delete(
 	}
 
 	if result.DeletedCount == 0 {
-		return services.ErrPageNotFound
+		return apperrors.ErrPageNotFound
 	}
 
 	return nil

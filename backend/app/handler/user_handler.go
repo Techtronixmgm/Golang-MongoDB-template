@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"basic-app/apperrors"
 	"basic-app/dto"
 	"basic-app/services"
 
@@ -45,7 +46,7 @@ func (h *UserHandler) Me(c *gin.Context) {
 		userIDString,
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrUserNotFound) {
+		if errors.Is(err, apperrors.ErrUserNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})
@@ -96,21 +97,21 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrUserNotFound):
+		case errors.Is(err, apperrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})
 
-		case errors.Is(err, services.ErrEmailAlreadyExists),
-			errors.Is(err, services.ErrAltEmailAlreadyExists),
-			errors.Is(err, services.ErrUsernameAlreadyExists),
-			errors.Is(err, services.ErrPhoneAlreadyExists):
+		case errors.Is(err, apperrors.ErrEmailAlreadyExists),
+			errors.Is(err, apperrors.ErrAltEmailAlreadyExists),
+			errors.Is(err, apperrors.ErrUsernameAlreadyExists),
+			errors.Is(err, apperrors.ErrPhoneAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrAltEmailSameAsEmail),
-			errors.Is(err, services.ErrNoFieldsToUpdate):
+		case errors.Is(err, apperrors.ErrAltEmailSameAsEmail),
+			errors.Is(err, apperrors.ErrNoFieldsToUpdate):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -147,15 +148,15 @@ func (h *UserHandler) CreateCustomer(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrEmailAlreadyExists),
-			errors.Is(err, services.ErrAltEmailAlreadyExists),
-			errors.Is(err, services.ErrUsernameAlreadyExists),
-			errors.Is(err, services.ErrPhoneAlreadyExists):
+		case errors.Is(err, apperrors.ErrEmailAlreadyExists),
+			errors.Is(err, apperrors.ErrAltEmailAlreadyExists),
+			errors.Is(err, apperrors.ErrUsernameAlreadyExists),
+			errors.Is(err, apperrors.ErrPhoneAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrAltEmailSameAsEmail):
+		case errors.Is(err, apperrors.ErrAltEmailSameAsEmail):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -195,31 +196,31 @@ func (h *UserHandler) UpdateCustomer(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrUserNotFound):
+		case errors.Is(err, apperrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "customer not found",
 			})
 
-		case errors.Is(err, services.ErrInvalidUserRole):
+		case errors.Is(err, apperrors.ErrInvalidUserRole):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "target user is not a customer",
 			})
 
-		case errors.Is(err, services.ErrEmailAlreadyExists),
-			errors.Is(err, services.ErrAltEmailAlreadyExists),
-			errors.Is(err, services.ErrUsernameAlreadyExists),
-			errors.Is(err, services.ErrPhoneAlreadyExists):
+		case errors.Is(err, apperrors.ErrEmailAlreadyExists),
+			errors.Is(err, apperrors.ErrAltEmailAlreadyExists),
+			errors.Is(err, apperrors.ErrUsernameAlreadyExists),
+			errors.Is(err, apperrors.ErrPhoneAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrAltEmailSameAsEmail),
-			errors.Is(err, services.ErrNoFieldsToUpdate):
+		case errors.Is(err, apperrors.ErrAltEmailSameAsEmail),
+			errors.Is(err, apperrors.ErrNoFieldsToUpdate):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -255,8 +256,8 @@ func (h *UserHandler) ListCustomers(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidPage),
-			errors.Is(err, services.ErrInvalidLimit):
+		case errors.Is(err, apperrors.ErrInvalidPage),
+			errors.Is(err, apperrors.ErrInvalidLimit):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -282,17 +283,17 @@ func (h *UserHandler) GetCustomerByID(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrUserNotFound):
+		case errors.Is(err, apperrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "customer not found",
 			})
 
-		case errors.Is(err, services.ErrInvalidUserRole):
+		case errors.Is(err, apperrors.ErrInvalidUserRole):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "target user is not a customer",
 			})
@@ -346,12 +347,12 @@ func (h *UserHandler) UpdateUserStatus(c *gin.Context) {
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrUserNotFound):
+		case errors.Is(err, apperrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})
 
-		case errors.Is(err, services.ErrCannotChangeOwnStatus):
+		case errors.Is(err, apperrors.ErrCannotChangeOwnStatus):
 			c.JSON(http.StatusForbidden, gin.H{
 				"error": "you cannot change your own account status",
 			})
@@ -393,17 +394,17 @@ func (h *UserHandler) ChangeUserPassword(c *gin.Context) {
 		&req,
 	); err != nil {
 		switch {
-		case errors.Is(err, services.ErrUserNotFound):
+		case errors.Is(err, apperrors.ErrUserNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "user not found",
 			})
 
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "invalid user id",
 			})
 
-		case errors.Is(err, services.ErrInvalidUserRole):
+		case errors.Is(err, apperrors.ErrInvalidUserRole):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "password can only be reset for customer users",
 			})
@@ -470,12 +471,12 @@ func (h *UserHandler) UpdateProfilePic(c *gin.Context) {
 		fileHeader,
 	); err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidUserID):
+		case errors.Is(err, apperrors.ErrInvalidUserID):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 
-		case errors.Is(err, services.ErrInvalidUserRole):
+		case errors.Is(err, apperrors.ErrInvalidUserRole):
 			c.JSON(http.StatusForbidden, gin.H{
 				"error": err.Error(),
 			})

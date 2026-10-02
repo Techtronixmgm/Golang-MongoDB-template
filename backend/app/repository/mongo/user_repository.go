@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"basic-app/apperrors"
 	"basic-app/models"
 	"basic-app/repository"
-	"basic-app/services"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -91,7 +91,7 @@ func (r *UserRepository) FindByID(
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, services.ErrUserNotFound
+			return nil, apperrors.ErrUserNotFound
 		}
 
 		return nil, err
@@ -121,7 +121,7 @@ func (r *UserRepository) FindByUsername(
 
 	if err != nil {
 		if errors.Is(err, mongodriver.ErrNoDocuments) {
-			return nil, services.ErrUserNotFound
+			return nil, apperrors.ErrUserNotFound
 		}
 
 		return nil, err
@@ -180,7 +180,7 @@ func (r *UserRepository) Update(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	return nil
@@ -220,7 +220,7 @@ func (r *UserRepository) UpdateProfilePic(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	return nil
@@ -260,7 +260,7 @@ func (r *UserRepository) UpdatePassword(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	return nil
@@ -303,7 +303,7 @@ func (r *UserRepository) UpdateRefreshToken(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	return nil
@@ -343,7 +343,7 @@ func (r *UserRepository) UserStatus(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	return nil
@@ -374,7 +374,7 @@ func (r *UserRepository) Delete(
 	}
 
 	if result.DeletedCount == 0 {
-		return services.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	return nil
@@ -395,7 +395,7 @@ func (r *UserRepository) FindByPhone(
 	).Decode(&user)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, services.ErrUserNotFound
+		return nil, apperrors.ErrUserNotFound
 	}
 
 	if err != nil {
@@ -424,7 +424,7 @@ func (r *UserRepository) FindByAnyEmail(
 	err := r.collection.FindOne(ctx, filter).Decode(&user)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return nil, services.ErrUserNotFound
+		return nil, apperrors.ErrUserNotFound
 	}
 
 	if err != nil {
@@ -455,7 +455,7 @@ func (r *UserRepository) FindByLoginIdentifier(
 	err := r.collection.FindOne(ctx, filter).Decode(&user)
 
 	if errors.Is(err, mongodriver.ErrNoDocuments) {
-		return nil, services.ErrUserNotFound
+		return nil, apperrors.ErrUserNotFound
 	}
 
 	if err != nil {
@@ -537,7 +537,7 @@ func (r *UserRepository) UpdateLastLoginAt(
 
 	objectID, err := bson.ObjectIDFromHex(userID)
 	if err != nil {
-		return services.ErrInvalidUserID
+		return apperrors.ErrInvalidUserID
 	}
 
 	result, err := r.collection.UpdateOne(
@@ -554,7 +554,7 @@ func (r *UserRepository) UpdateLastLoginAt(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrUserNotFound
+		return apperrors.ErrUserNotFound
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"basic-app/apperrors"
 	"strings"
 	"time"
 
@@ -50,7 +51,7 @@ func (s *TOTPService) VerifyCode(
 	code = strings.TrimSpace(code)
 
 	if secret == "" || code == "" {
-		return ErrInvalidTOTPCode
+		return apperrors.ErrInvalidTOTPCode
 	}
 
 	valid, err := totp.ValidateCustom(
@@ -77,7 +78,7 @@ func (s *TOTPService) VerifyCode(
 	}
 
 	if !valid {
-		return ErrInvalidTOTPCode
+		return apperrors.ErrInvalidTOTPCode
 	}
 
 	return nil

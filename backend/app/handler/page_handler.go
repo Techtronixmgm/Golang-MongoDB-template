@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"basic-app/apperrors"
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/services"
@@ -64,9 +65,9 @@ func (h *PageHandler) Create(c *gin.Context) {
 		page,
 	); err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidPageContent),
-			errors.Is(err, services.ErrInvalidVisibility),
-			errors.Is(err, services.ErrInvalidSlug):
+		case errors.Is(err, apperrors.ErrInvalidPageContent),
+			errors.Is(err, apperrors.ErrInvalidVisibility),
+			errors.Is(err, apperrors.ErrInvalidSlug):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -101,7 +102,7 @@ func (h *PageHandler) GetBySlug(c *gin.Context) {
 		slug,
 	)
 	if err != nil {
-		if errors.Is(err, services.ErrPageNotFound) {
+		if errors.Is(err, apperrors.ErrPageNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "page not found",
 			})
@@ -164,11 +165,11 @@ func (h *PageHandler) List(c *gin.Context) {
 
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidPage):
+		case errors.Is(err, apperrors.ErrInvalidPage):
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		case errors.Is(err, services.ErrInvalidLimit):
+		case errors.Is(err, apperrors.ErrInvalidLimit):
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		case errors.Is(err, services.ErrInvalidVisibility):
+		case errors.Is(err, apperrors.ErrInvalidVisibility):
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -216,19 +217,19 @@ func (h *PageHandler) Update(c *gin.Context) {
 
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrPageNotFound):
+		case errors.Is(err, apperrors.ErrPageNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "page not found",
 			})
 
-		case errors.Is(err, services.ErrSlugAlreadyExists):
+		case errors.Is(err, apperrors.ErrSlugAlreadyExists):
 			c.JSON(http.StatusConflict, gin.H{
 				"error": "slug already exists",
 			})
 
-		case errors.Is(err, services.ErrInvalidPageContent),
-			errors.Is(err, services.ErrInvalidVisibility),
-			errors.Is(err, services.ErrInvalidSlug):
+		case errors.Is(err, apperrors.ErrInvalidPageContent),
+			errors.Is(err, apperrors.ErrInvalidVisibility),
+			errors.Is(err, apperrors.ErrInvalidSlug):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -262,7 +263,7 @@ func (h *PageHandler) Delete(c *gin.Context) {
 		c.Request.Context(),
 		id,
 	); err != nil {
-		if errors.Is(err, services.ErrPageNotFound) {
+		if errors.Is(err, apperrors.ErrPageNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "page not found",
 			})

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"basic-app/apperrors"
 	"basic-app/dto"
 	"basic-app/models"
 	"basic-app/repository"
@@ -38,19 +39,19 @@ func (s *MenuService) Create(
 	name := strings.TrimSpace(req.Name)
 
 	if name == "" {
-		return nil, ErrInvalidMenuName
+		return nil, apperrors.ErrInvalidMenuName
 	}
 
 	if !isValidMenuLocation(req.Location) {
-		return nil, ErrInvalidMenuLocation
+		return nil, apperrors.ErrInvalidMenuLocation
 	}
 
 	_, err := s.menuRepository.FindByLocation(ctx, req.Location)
 	if err == nil {
-		return nil, ErrMenuAlreadyExists
+		return nil, apperrors.ErrMenuAlreadyExists
 	}
 
-	if !errors.Is(err, ErrMenuNotFound) {
+	if !errors.Is(err, apperrors.ErrMenuNotFound) {
 		return nil, err
 	}
 
@@ -83,8 +84,8 @@ func (s *MenuService) Update(
 		id,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -94,7 +95,7 @@ func (s *MenuService) Update(
 		name := strings.TrimSpace(*req.Name)
 
 		if name == "" {
-			return nil, ErrInvalidMenuName
+			return nil, apperrors.ErrInvalidMenuName
 		}
 
 		menu.Name = name
@@ -111,8 +112,8 @@ func (s *MenuService) Update(
 		id,
 		menu,
 	); err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -130,8 +131,8 @@ func (s *MenuService) Get(
 		id,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -151,7 +152,7 @@ func (s *MenuService) GetPublicByLocation(
 	location models.MenuLocation,
 ) (*dto.PublicMenuResponse, error) {
 	if !isValidMenuLocation(location) {
-		return nil, ErrInvalidMenuLocation
+		return nil, apperrors.ErrInvalidMenuLocation
 	}
 
 	menu, err := s.menuRepository.FindByLocation(
@@ -159,15 +160,15 @@ func (s *MenuService) GetPublicByLocation(
 		location,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
 	}
 
 	if !menu.Status {
-		return nil, ErrMenuInactive
+		return nil, apperrors.ErrMenuInactive
 	}
 
 	items, err := s.buildPublicMenuItems(
@@ -223,7 +224,7 @@ func (s *MenuService) buildPublicMenuItems(
 
 		case models.MenuItemTypePage:
 			if item.PageID == nil {
-				return nil, ErrInvalidMenuItem
+				return nil, apperrors.ErrInvalidMenuItem
 			}
 
 			page, err := s.pageRepository.FindByID(
@@ -233,9 +234,9 @@ func (s *MenuService) buildPublicMenuItems(
 			if err != nil {
 				if errors.Is(
 					err,
-					ErrPageNotFound,
+					apperrors.ErrPageNotFound,
 				) {
-					return nil, ErrPageNotFound
+					return nil, apperrors.ErrPageNotFound
 				}
 
 				return nil, err
@@ -306,8 +307,8 @@ func (s *MenuService) Delete(
 	id string,
 ) error {
 	if err := s.menuRepository.Delete(ctx, id); err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return apperrors.ErrMenuNotFound
 		}
 
 		return err
@@ -323,8 +324,8 @@ func (s *MenuService) AddItem(
 ) (*models.Menu, error) {
 	menu, err := s.menuRepository.FindByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -333,11 +334,11 @@ func (s *MenuService) AddItem(
 	label := strings.TrimSpace(req.Label)
 
 	if label == "" {
-		return nil, ErrInvalidMenuItem
+		return nil, apperrors.ErrInvalidMenuItem
 	}
 
 	if !isValidMenuItemType(req.Type) {
-		return nil, ErrInvalidMenuItem
+		return nil, apperrors.ErrInvalidMenuItem
 	}
 
 	item := models.MenuItem{
@@ -356,15 +357,15 @@ func (s *MenuService) AddItem(
 	switch req.Type {
 	case models.MenuItemTypePage:
 		if req.PageID == nil || strings.TrimSpace(*req.PageID) == "" {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		pageID := strings.TrimSpace(*req.PageID)
 
 		_, err := s.pageRepository.FindByID(ctx, pageID)
 		if err != nil {
-			if errors.Is(err, ErrPageNotFound) {
-				return nil, ErrPageNotFound
+			if errors.Is(err, apperrors.ErrPageNotFound) {
+				return nil, apperrors.ErrPageNotFound
 			}
 
 			return nil, err
@@ -372,27 +373,27 @@ func (s *MenuService) AddItem(
 
 		objectID, err := bson.ObjectIDFromHex(pageID)
 		if err != nil {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		item.PageID = &objectID
 
 		if item.URL != "" {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 	case models.MenuItemTypeURL:
 		if item.URL == "" {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		if req.PageID != nil {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 	case models.MenuItemTypeGroup:
 		if item.URL != "" || req.PageID != nil {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 	}
 
@@ -415,7 +416,7 @@ func (s *MenuService) AddItem(
 		maxDepth = maxDepthSettings.Bottom
 
 	default:
-		return nil, ErrInvalidMenuItem
+		return nil, apperrors.ErrInvalidMenuItem
 	}
 
 	// Top-level item.
@@ -428,7 +429,7 @@ func (s *MenuService) AddItem(
 			itemDepth >= maxDepth {
 			return nil, fmt.Errorf(
 				"%w: %s menu groups cannot be created at level %d",
-				ErrMenuDepthExceeded,
+				apperrors.ErrMenuDepthExceeded,
 				menu.Location,
 				itemDepth,
 			)
@@ -442,7 +443,7 @@ func (s *MenuService) AddItem(
 
 		parentObjectID, err := bson.ObjectIDFromHex(parentID)
 		if err != nil {
-			return nil, ErrMenuItemNotFound
+			return nil, apperrors.ErrMenuItemNotFound
 		}
 
 		location, err := findMenuItemLocation(
@@ -451,8 +452,8 @@ func (s *MenuService) AddItem(
 			1,
 		)
 		if err != nil {
-			if errors.Is(err, ErrMenuItemNotFound) {
-				return nil, ErrMenuItemNotFound
+			if errors.Is(err, apperrors.ErrMenuItemNotFound) {
+				return nil, apperrors.ErrMenuItemNotFound
 			}
 
 			return nil, err
@@ -461,7 +462,7 @@ func (s *MenuService) AddItem(
 		parent := location.Item
 
 		if parent.Type != models.MenuItemTypeGroup {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		itemDepth := location.Depth + 1
@@ -470,7 +471,7 @@ func (s *MenuService) AddItem(
 		if itemDepth > maxDepth {
 			return nil, fmt.Errorf(
 				"%w: %s menu cannot exceed %d levels",
-				ErrMenuDepthExceeded,
+				apperrors.ErrMenuDepthExceeded,
 				menu.Location,
 				maxDepth,
 			)
@@ -482,7 +483,7 @@ func (s *MenuService) AddItem(
 			itemDepth >= maxDepth {
 			return nil, fmt.Errorf(
 				"%w: %s menu groups cannot be created at level %d",
-				ErrMenuDepthExceeded,
+				apperrors.ErrMenuDepthExceeded,
 				menu.Location,
 				itemDepth,
 			)
@@ -503,8 +504,8 @@ func (s *MenuService) AddItem(
 		id,
 		menu,
 	); err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -524,8 +525,8 @@ func (s *MenuService) UpdateItem(
 		menuID,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -533,7 +534,7 @@ func (s *MenuService) UpdateItem(
 
 	itemObjectID, err := bson.ObjectIDFromHex(itemID)
 	if err != nil {
-		return nil, ErrMenuItemNotFound
+		return nil, apperrors.ErrMenuItemNotFound
 	}
 
 	location, err := findMenuItemLocation(
@@ -542,8 +543,8 @@ func (s *MenuService) UpdateItem(
 		1,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuItemNotFound) {
-			return nil, ErrMenuItemNotFound
+		if errors.Is(err, apperrors.ErrMenuItemNotFound) {
+			return nil, apperrors.ErrMenuItemNotFound
 		}
 
 		return nil, err
@@ -555,7 +556,7 @@ func (s *MenuService) UpdateItem(
 		label := strings.TrimSpace(*req.Label)
 
 		if label == "" {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		item.Label = label
@@ -567,7 +568,7 @@ func (s *MenuService) UpdateItem(
 
 	if req.Type != nil {
 		if !isValidMenuItemType(*req.Type) {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		item.Type = *req.Type
@@ -590,11 +591,11 @@ func (s *MenuService) UpdateItem(
 
 		if item.Type != models.MenuItemTypePage {
 			if pageID != "" {
-				return nil, ErrInvalidMenuItem
+				return nil, apperrors.ErrInvalidMenuItem
 			}
 		} else {
 			if pageID == "" {
-				return nil, ErrInvalidMenuItem
+				return nil, apperrors.ErrInvalidMenuItem
 			}
 
 			_, err := s.pageRepository.FindByID(
@@ -602,8 +603,8 @@ func (s *MenuService) UpdateItem(
 				pageID,
 			)
 			if err != nil {
-				if errors.Is(err, ErrPageNotFound) {
-					return nil, ErrPageNotFound
+				if errors.Is(err, apperrors.ErrPageNotFound) {
+					return nil, apperrors.ErrPageNotFound
 				}
 
 				return nil, err
@@ -611,7 +612,7 @@ func (s *MenuService) UpdateItem(
 
 			objectID, err := bson.ObjectIDFromHex(pageID)
 			if err != nil {
-				return nil, ErrInvalidMenuItem
+				return nil, apperrors.ErrInvalidMenuItem
 			}
 
 			item.PageID = &objectID
@@ -625,14 +626,14 @@ func (s *MenuService) UpdateItem(
 		case models.MenuItemTypePage,
 			models.MenuItemTypeGroup:
 			if url != "" {
-				return nil, ErrInvalidMenuItem
+				return nil, apperrors.ErrInvalidMenuItem
 			}
 
 			item.URL = ""
 
 		case models.MenuItemTypeURL:
 			if url == "" {
-				return nil, ErrInvalidMenuItem
+				return nil, apperrors.ErrInvalidMenuItem
 			}
 
 			item.URL = url
@@ -642,14 +643,14 @@ func (s *MenuService) UpdateItem(
 	switch item.Type {
 	case models.MenuItemTypePage:
 		if item.PageID == nil {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		item.URL = ""
 
 	case models.MenuItemTypeURL:
 		if item.URL == "" {
-			return nil, ErrInvalidMenuItem
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		item.PageID = nil
@@ -666,8 +667,8 @@ func (s *MenuService) UpdateItem(
 		menuID,
 		menu,
 	); err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -686,8 +687,8 @@ func (s *MenuService) DeleteItem(
 		menuID,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return apperrors.ErrMenuNotFound
 		}
 
 		return err
@@ -695,7 +696,7 @@ func (s *MenuService) DeleteItem(
 
 	itemObjectID, err := bson.ObjectIDFromHex(itemID)
 	if err != nil {
-		return ErrMenuItemNotFound
+		return apperrors.ErrMenuItemNotFound
 	}
 
 	location, err := findMenuItemLocation(
@@ -704,8 +705,8 @@ func (s *MenuService) DeleteItem(
 		1,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuItemNotFound) {
-			return ErrMenuItemNotFound
+		if errors.Is(err, apperrors.ErrMenuItemNotFound) {
+			return apperrors.ErrMenuItemNotFound
 		}
 
 		return err
@@ -729,8 +730,8 @@ func (s *MenuService) DeleteItem(
 		menuID,
 		menu,
 	); err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return apperrors.ErrMenuNotFound
 		}
 
 		return err
@@ -750,8 +751,8 @@ func (s *MenuService) MoveItem(
 		menuID,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -759,7 +760,7 @@ func (s *MenuService) MoveItem(
 
 	itemObjectID, err := bson.ObjectIDFromHex(itemID)
 	if err != nil {
-		return nil, ErrMenuItemNotFound
+		return nil, apperrors.ErrMenuItemNotFound
 	}
 
 	location, err := findMenuItemLocation(
@@ -768,8 +769,8 @@ func (s *MenuService) MoveItem(
 		1,
 	)
 	if err != nil {
-		if errors.Is(err, ErrMenuItemNotFound) {
-			return nil, ErrMenuItemNotFound
+		if errors.Is(err, apperrors.ErrMenuItemNotFound) {
+			return nil, apperrors.ErrMenuItemNotFound
 		}
 
 		return nil, err
@@ -787,7 +788,7 @@ func (s *MenuService) MoveItem(
 	}
 
 	if targetIndex == -1 {
-		return nil, ErrMenuItemOrderNotFound
+		return nil, apperrors.ErrMenuItemOrderNotFound
 	}
 
 	if location.Index == targetIndex {
@@ -806,8 +807,8 @@ func (s *MenuService) MoveItem(
 		menuID,
 		menu,
 	); err != nil {
-		if errors.Is(err, ErrMenuNotFound) {
-			return nil, ErrMenuNotFound
+		if errors.Is(err, apperrors.ErrMenuNotFound) {
+			return nil, apperrors.ErrMenuNotFound
 		}
 
 		return nil, err
@@ -841,12 +842,12 @@ func findMenuItemWithDepth(
 			return found, foundDepth, nil
 		}
 
-		if !errors.Is(err, ErrMenuItemNotFound) {
+		if !errors.Is(err, apperrors.ErrMenuItemNotFound) {
 			return nil, 0, err
 		}
 	}
 
-	return nil, 0, ErrMenuItemNotFound
+	return nil, 0, apperrors.ErrMenuItemNotFound
 }
 
 func findMenuItem(
@@ -874,12 +875,12 @@ func findMenuItem(
 			return found, siblings, foundDepth, nil
 		}
 
-		if !errors.Is(err, ErrMenuItemNotFound) {
+		if !errors.Is(err, apperrors.ErrMenuItemNotFound) {
 			return nil, nil, 0, err
 		}
 	}
 
-	return nil, nil, 0, ErrMenuItemNotFound
+	return nil, nil, 0, apperrors.ErrMenuItemNotFound
 }
 
 type menuItemLocation struct {
@@ -919,12 +920,12 @@ func findMenuItemLocation(
 			return found, nil
 		}
 
-		if !errors.Is(err, ErrMenuItemNotFound) {
+		if !errors.Is(err, apperrors.ErrMenuItemNotFound) {
 			return nil, err
 		}
 	}
 
-	return nil, ErrMenuItemNotFound
+	return nil, apperrors.ErrMenuItemNotFound
 }
 
 func getMenuMaxDepth(
@@ -942,6 +943,6 @@ func getMenuMaxDepth(
 		return settings.Bottom, nil
 
 	default:
-		return 0, ErrInvalidMenuItem
+		return 0, apperrors.ErrInvalidMenuItem
 	}
 }

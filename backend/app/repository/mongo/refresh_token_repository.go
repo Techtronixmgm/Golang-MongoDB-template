@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"basic-app/apperrors"
 	"basic-app/models"
 	"basic-app/repository"
-	"basic-app/services"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -60,7 +60,7 @@ func (r *RefreshTokenRepository) FindByTokenHash(
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, services.ErrRefreshTokenNotFound
+			return nil, apperrors.ErrRefreshTokenNotFound
 		}
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (r *RefreshTokenRepository) FindByTokenHash(
 func (r *RefreshTokenRepository) Touch(ctx context.Context, tokenID string) error {
 	objectID, err := bson.ObjectIDFromHex(tokenID)
 	if err != nil {
-		return services.ErrRefreshTokenNotFound
+		return apperrors.ErrRefreshTokenNotFound
 	}
 
 	now := time.Now().UTC()
@@ -93,7 +93,7 @@ func (r *RefreshTokenRepository) Touch(ctx context.Context, tokenID string) erro
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrRefreshTokenNotFound
+		return apperrors.ErrRefreshTokenNotFound
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func (r *RefreshTokenRepository) Revoke(
 ) error {
 	objectID, err := bson.ObjectIDFromHex(tokenID)
 	if err != nil {
-		return services.ErrRefreshTokenNotFound
+		return apperrors.ErrRefreshTokenNotFound
 	}
 
 	now := time.Now().UTC()
@@ -128,7 +128,7 @@ func (r *RefreshTokenRepository) Revoke(
 	}
 
 	if result.MatchedCount == 0 {
-		return services.ErrRefreshTokenNotFound
+		return apperrors.ErrRefreshTokenNotFound
 	}
 
 	return nil
@@ -140,7 +140,7 @@ func (r *RefreshTokenRepository) RevokeAllByUserID(
 ) error {
 	objectID, err := bson.ObjectIDFromHex(userID)
 	if err != nil {
-		return services.ErrRefreshTokenNotFound
+		return apperrors.ErrRefreshTokenNotFound
 	}
 
 	now := time.Now().UTC()

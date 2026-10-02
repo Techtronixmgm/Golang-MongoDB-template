@@ -411,6 +411,12 @@ func (c Config) ValidateBackupCodeConfig() error {
 		)
 	}
 
+	if c.BackupCodeCount < 8 {
+		return errors.New(
+			"backup code count must be at least 8",
+		)
+	}
+
 	if c.BackupCodeCount < c.BackupCodeLowThreshold+4 {
 		return errors.New(
 			"backup code count must be at least 4 greater than backup code low threshold",

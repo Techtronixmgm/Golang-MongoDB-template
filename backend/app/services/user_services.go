@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"basic-app/apperrors"
 	"basic-app/config"
 	"basic-app/dto"
 	"basic-app/models"
@@ -71,7 +72,7 @@ func (s *UserService) GetCustomerByID(
 	}
 
 	if user.Role != models.RoleCustomer {
-		return nil, ErrInvalidUserRole
+		return nil, apperrors.ErrInvalidUserRole
 	}
 
 	return user, nil
@@ -84,7 +85,7 @@ func (s *UserService) UpdateProfile(
 	req *dto.UpdateUserProfileRequest,
 ) (*models.User, error) {
 	if req == nil {
-		return nil, ErrNoFieldsToUpdate
+		return nil, apperrors.ErrNoFieldsToUpdate
 	}
 
 	currentUser, err := s.userRepository.FindByID(ctx, userID)
@@ -93,7 +94,7 @@ func (s *UserService) UpdateProfile(
 	}
 
 	if !currentUser.Status {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	// Work on a copy. The database is changed only after all validation passes.
@@ -207,11 +208,11 @@ func (s *UserService) UpdateProfile(
 	}
 
 	if !hasUpdates {
-		return nil, ErrNoFieldsToUpdate
+		return nil, apperrors.ErrNoFieldsToUpdate
 	}
 
 	if user.AltEmail != "" && user.AltEmail == user.Email {
-		return nil, ErrAltEmailSameAsEmail
+		return nil, apperrors.ErrAltEmailSameAsEmail
 	}
 
 	// Primary email must not belong to another user's email/alternate email.
@@ -223,11 +224,11 @@ func (s *UserService) UpdateProfile(
 		if err == nil &&
 			existingUser != nil &&
 			existingUser.ID != currentUser.ID {
-			return nil, ErrEmailAlreadyExists
+			return nil, apperrors.ErrEmailAlreadyExists
 		}
 
 		if err != nil &&
-			!errors.Is(err, ErrUserNotFound) {
+			!errors.Is(err, apperrors.ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -242,11 +243,11 @@ func (s *UserService) UpdateProfile(
 		if err == nil &&
 			existingUser != nil &&
 			existingUser.ID != currentUser.ID {
-			return nil, ErrAltEmailAlreadyExists
+			return nil, apperrors.ErrAltEmailAlreadyExists
 		}
 
 		if err != nil &&
-			!errors.Is(err, ErrUserNotFound) {
+			!errors.Is(err, apperrors.ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -259,11 +260,11 @@ func (s *UserService) UpdateProfile(
 		if err == nil &&
 			existingUser != nil &&
 			existingUser.ID != currentUser.ID {
-			return nil, ErrUsernameAlreadyExists
+			return nil, apperrors.ErrUsernameAlreadyExists
 		}
 
 		if err != nil &&
-			!errors.Is(err, ErrUserNotFound) {
+			!errors.Is(err, apperrors.ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -276,11 +277,11 @@ func (s *UserService) UpdateProfile(
 		if err == nil &&
 			existingUser != nil &&
 			existingUser.ID != currentUser.ID {
-			return nil, ErrPhoneAlreadyExists
+			return nil, apperrors.ErrPhoneAlreadyExists
 		}
 
 		if err != nil &&
-			!errors.Is(err, ErrUserNotFound) {
+			!errors.Is(err, apperrors.ErrUserNotFound) {
 			return nil, err
 		}
 	}
@@ -301,7 +302,7 @@ func (s *UserService) UpdateProfilePic(
 	userID = strings.TrimSpace(userID)
 
 	if userID == "" {
-		return ErrInvalidUserID
+		return apperrors.ErrInvalidUserID
 	}
 
 	if fileHeader == nil {
@@ -406,7 +407,7 @@ func (s *UserService) UserStatus(
 	status bool,
 ) error {
 	if adminID == userID {
-		return ErrCannotChangeOwnStatus
+		return apperrors.ErrCannotChangeOwnStatus
 	}
 
 	return s.userRepository.UserStatus(
@@ -456,7 +457,7 @@ func (s *UserService) CreateCustomer(
 	}
 
 	if altEmail != "" && altEmail == email {
-		return nil, ErrAltEmailSameAsEmail
+		return nil, apperrors.ErrAltEmailSameAsEmail
 	}
 
 	phone, err := validation.ValidatePhone(req.Phone)
@@ -470,10 +471,10 @@ func (s *UserService) CreateCustomer(
 
 	existingUser, err := s.userRepository.FindByAnyEmail(ctx, email)
 	if err == nil && existingUser != nil {
-		return nil, ErrEmailAlreadyExists
+		return nil, apperrors.ErrEmailAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
+	if err != nil && !errors.Is(err, apperrors.ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -483,30 +484,30 @@ func (s *UserService) CreateCustomer(
 			altEmail,
 		)
 		if err == nil && existingUser != nil {
-			return nil, ErrAltEmailAlreadyExists
+			return nil, apperrors.ErrAltEmailAlreadyExists
 		}
 
 		if err != nil &&
-			!errors.Is(err, ErrUserNotFound) {
+			!errors.Is(err, apperrors.ErrUserNotFound) {
 			return nil, err
 		}
 	}
 
 	existingUser, err = s.userRepository.FindByUsername(ctx, username)
 	if err == nil && existingUser != nil {
-		return nil, ErrUsernameAlreadyExists
+		return nil, apperrors.ErrUsernameAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
+	if err != nil && !errors.Is(err, apperrors.ErrUserNotFound) {
 		return nil, err
 	}
 
 	existingUser, err = s.userRepository.FindByPhone(ctx, phone)
 	if err == nil && existingUser != nil {
-		return nil, ErrPhoneAlreadyExists
+		return nil, apperrors.ErrPhoneAlreadyExists
 	}
 
-	if err != nil && !errors.Is(err, ErrUserNotFound) {
+	if err != nil && !errors.Is(err, apperrors.ErrUserNotFound) {
 		return nil, err
 	}
 
@@ -549,7 +550,7 @@ func (s *UserService) ChangeUserPassword(
 
 	userID = strings.TrimSpace(userID)
 	if userID == "" {
-		return ErrInvalidUserID
+		return apperrors.ErrInvalidUserID
 	}
 
 	if err := validation.ValidatePassword(req.NewPassword); err != nil {
@@ -563,7 +564,7 @@ func (s *UserService) ChangeUserPassword(
 
 	// Administrators can only reset customer passwords.
 	if user.Role != models.RoleCustomer {
-		return ErrInvalidUserRole
+		return apperrors.ErrInvalidUserRole
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword(
@@ -595,7 +596,7 @@ func (s *UserService) UpdateCustomer(
 	}
 
 	if customer.Role != models.RoleCustomer {
-		return nil, ErrInvalidUserRole
+		return nil, apperrors.ErrInvalidUserRole
 	}
 
 	return s.UpdateProfile(ctx, customerID, req)
@@ -611,7 +612,7 @@ func (s *UserService) ListCustomers(
 	}
 
 	if page < 1 {
-		return nil, ErrInvalidPage
+		return nil, apperrors.ErrInvalidPage
 	}
 
 	limit := query.Limit
@@ -620,7 +621,7 @@ func (s *UserService) ListCustomers(
 	}
 
 	if limit < 1 || limit > 100 {
-		return nil, ErrInvalidLimit
+		return nil, apperrors.ErrInvalidLimit
 	}
 
 	search := strings.TrimSpace(query.Search)
@@ -661,7 +662,7 @@ func (s *UserService) StartTwoFactorSetup(
 	userID = strings.TrimSpace(userID)
 
 	if userID == "" {
-		return "", "", ErrInvalidUserID
+		return "", "", apperrors.ErrInvalidUserID
 	}
 
 	user, err := s.userRepository.FindByID(ctx, userID)
@@ -670,11 +671,11 @@ func (s *UserService) StartTwoFactorSetup(
 	}
 
 	if !user.Status {
-		return "", "", ErrInvalidCredentials
+		return "", "", apperrors.ErrInvalidCredentials
 	}
 
 	if user.TwoFactorEnabled {
-		return "", "", ErrTwoFactorAlreadyEnabled
+		return "", "", apperrors.ErrTwoFactorAlreadyEnabled
 	}
 
 	setup, err := s.totpService.GenerateSecret(user.Username)
@@ -706,7 +707,7 @@ func (s *UserService) VerifyTwoFactorSetup(
 	userID = strings.TrimSpace(userID)
 
 	if userID == "" {
-		return nil, ErrInvalidUserID
+		return nil, apperrors.ErrInvalidUserID
 	}
 
 	user, err := s.userRepository.FindByID(ctx, userID)
@@ -715,11 +716,11 @@ func (s *UserService) VerifyTwoFactorSetup(
 	}
 
 	if !user.Status {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	if user.TwoFactorEnabled {
-		return nil, ErrTwoFactorAlreadyEnabled
+		return nil, apperrors.ErrTwoFactorAlreadyEnabled
 	}
 
 	pendingSecret := strings.TrimSpace(
@@ -727,7 +728,7 @@ func (s *UserService) VerifyTwoFactorSetup(
 	)
 
 	if pendingSecret == "" {
-		return nil, ErrTwoFactorSetupNotStarted
+		return nil, apperrors.ErrTwoFactorSetupNotStarted
 	}
 
 	decryptedSecret, err := s.totpEncryptionService.Decrypt(
@@ -778,7 +779,7 @@ func (s *UserService) DisableTwoFactor(
 	userID = strings.TrimSpace(userID)
 
 	if userID == "" {
-		return ErrInvalidUserID
+		return apperrors.ErrInvalidUserID
 	}
 
 	user, err := s.userRepository.FindByID(ctx, userID)
@@ -787,12 +788,12 @@ func (s *UserService) DisableTwoFactor(
 	}
 
 	if !user.Status {
-		return ErrInvalidCredentials
+		return apperrors.ErrInvalidCredentials
 	}
 
 	if !user.TwoFactorEnabled ||
 		strings.TrimSpace(user.TwoFactorSecret) == "" {
-		return ErrTwoFactorNotEnabled
+		return apperrors.ErrTwoFactorNotEnabled
 	}
 
 	decryptedSecret, err := s.totpEncryptionService.Decrypt(
@@ -826,11 +827,11 @@ func (s *UserService) VerifyBackupCode(
 	code = strings.ToUpper(strings.TrimSpace(code))
 
 	if userID == "" {
-		return 0, ErrInvalidUserID
+		return 0, apperrors.ErrInvalidUserID
 	}
 
 	if code == "" {
-		return 0, ErrInvalidBackupCode
+		return 0, apperrors.ErrInvalidBackupCode
 	}
 
 	user, err := s.userRepository.FindByID(ctx, userID)
@@ -839,7 +840,7 @@ func (s *UserService) VerifyBackupCode(
 	}
 
 	if !user.Status || !user.TwoFactorEnabled {
-		return 0, ErrInvalidCredentials
+		return 0, apperrors.ErrInvalidCredentials
 	}
 
 	for index, hash := range user.BackupCodeHashes {
@@ -864,7 +865,7 @@ func (s *UserService) VerifyBackupCode(
 		return remaining, nil
 	}
 
-	return 0, ErrInvalidBackupCode
+	return 0, apperrors.ErrInvalidBackupCode
 }
 
 func (s *UserService) RegenerateBackupCodes(
@@ -876,11 +877,11 @@ func (s *UserService) RegenerateBackupCodes(
 	code = strings.ToUpper(strings.TrimSpace(code))
 
 	if userID == "" {
-		return nil, ErrInvalidUserID
+		return nil, apperrors.ErrInvalidUserID
 	}
 
 	if code == "" {
-		return nil, ErrInvalidTOTPCode
+		return nil, apperrors.ErrInvalidTOTPCode
 	}
 
 	user, err := s.userRepository.FindByID(ctx, userID)
@@ -889,12 +890,12 @@ func (s *UserService) RegenerateBackupCodes(
 	}
 
 	if !user.Status {
-		return nil, ErrInvalidCredentials
+		return nil, apperrors.ErrInvalidCredentials
 	}
 
 	if !user.TwoFactorEnabled ||
 		strings.TrimSpace(user.TwoFactorSecret) == "" {
-		return nil, ErrTwoFactorNotEnabled
+		return nil, apperrors.ErrTwoFactorNotEnabled
 	}
 
 	// A TOTP code is exactly 6 digits.
@@ -903,14 +904,14 @@ func (s *UserService) RegenerateBackupCodes(
 			user.TwoFactorSecret,
 		)
 		if err != nil {
-			return nil, ErrInvalidTOTPCode
+			return nil, apperrors.ErrInvalidTOTPCode
 		}
 
 		if err := s.totpService.VerifyCode(
 			decryptedSecret,
 			code,
 		); err != nil {
-			return nil, ErrInvalidTOTPCode
+			return nil, apperrors.ErrInvalidTOTPCode
 		}
 	} else {
 		backupCodeValid := false
@@ -926,7 +927,7 @@ func (s *UserService) RegenerateBackupCodes(
 		}
 
 		if !backupCodeValid {
-			return nil, ErrInvalidBackupCode
+			return nil, apperrors.ErrInvalidBackupCode
 		}
 	}
 
@@ -955,7 +956,7 @@ func (s *UserService) ResetTwoFactor(
 	userID = strings.TrimSpace(userID)
 
 	if userID == "" {
-		return ErrInvalidUserID
+		return apperrors.ErrInvalidUserID
 	}
 
 	user, err := s.userRepository.FindByID(ctx, userID)
@@ -964,7 +965,7 @@ func (s *UserService) ResetTwoFactor(
 	}
 
 	if user.Role == models.RoleAdmin {
-		return ErrTwoFactorResetNotAllowed
+		return apperrors.ErrTwoFactorResetNotAllowed
 	}
 
 	user.TwoFactorEnabled = false
