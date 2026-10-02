@@ -755,7 +755,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"identifier\": \"johnf\",\n  \"password\": \"Password@123\"\n}\n\n// GET /api/v1/admin/pages\n// GET /api/v1/admin/pages?page=1&limit=20\n// GET /api/v1/admin/pages?visibility=public\n// GET /api/v1/admin/pages?visibility=registered\n// GET /api/v1/admin/pages?authorId=<id>\n\n// http://localhost:{{port}}/api/v1/admin/pages?page=1&limit=20&visibility=public&authorId=6aa2cfce102f1f260ac1d59f",
+                  "raw": "\n\n// GET /api/v1/admin/pages\n// GET /api/v1/admin/pages?page=1&limit=20\n// GET /api/v1/admin/pages?visibility=public\n// GET /api/v1/admin/pages?visibility=registered\n// GET /api/v1/admin/pages?authorId=<id>\n\n// http://localhost:{{port}}/api/v1/admin/pages?page=1&limit=20&visibility=public&authorId=6aa2cfce102f1f260ac1d59f",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -867,6 +867,148 @@
           "name": "Menus",
           "item": [
             {
+              "name": "Menu items",
+              "item": [
+                {
+                  "name": "Add item to Menu by ID",
+                  "request": {
+                    "method": "POST",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "\n\n\n{ \n    \"label\": \"Extra Extra Links\", \n    \"type\": \"group\", \n    // \"url\": \"https://en.wikipedia.org/wiki/Asa_Briggs\",\n     \"parentId\": \"6abe998f4b99ce51e7d48993\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b/items",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "{{port}}",
+                      "path": [
+                        "api",
+                        "v1",
+                        "admin",
+                        "menus",
+                        "6abdfc3304e717d520cd107b",
+                        "items"
+                      ]
+                    },
+                    "description": "{ \"label\": \"External Links\", \"type\": \"group\"}  \n{ \"label\": \"Website Development Porfolio\", \"type\": \"page\", \"pageId\": \"6aba5dfc511673699987806e\"}  \n{ \"label\": \"Alan Turing\", \"type\": \"url\", \"url\": \"https://en.wikipedia.org/wiki/Alan_Turing\", \"parentId\": \"6abe87fa7a9a7851ff85005b\"}"
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update item in Menu by ID",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "// {\n//   \"label\": \"Our Story\",\n//   \"displayStatus\": false,\n//   \"type\": \"page\",\"group\",\"url\"\n//   \"url\": \"https://chatgpt.com\",\n//   \"pageId\": \"YOUR_HOME_PAGE_ID\"\n// }\n\n{\n    \"label\": \"Asa Briggs\",\n     \"type\": \"url\",\n      \"url\": \"https://en.wikipedia.org/wiki/Enigma_machine\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b/items/6abe99b61c2ad7d15bc3c54b",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "{{port}}",
+                      "path": [
+                        "api",
+                        "v1",
+                        "admin",
+                        "menus",
+                        "6abdfc3304e717d520cd107b",
+                        "items",
+                        "6abe99b61c2ad7d15bc3c54b"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Move item in Menu by ID",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n\"order\":2\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b/items/6abe8f637a9a7851ff850064/order",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "{{port}}",
+                      "path": [
+                        "api",
+                        "v1",
+                        "admin",
+                        "menus",
+                        "6abdfc3304e717d520cd107b",
+                        "items",
+                        "6abe8f637a9a7851ff850064",
+                        "order"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete item in Menu by ID",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "// {\n//   \"label\": \"Our Story\",\n//   \"displayStatus\": false,\n//   \"type\": \"page\",\"group\",\"url\"\n//   \"url\": \"https://chatgpt.com\",\n//   \"pageId\": \"YOUR_HOME_PAGE_ID\"\n// }\n\n{\n    \"label\": \"AI Engine\",\n     \"type\": \"group\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b/items/6abe99b61c2ad7d15bc3c54b",
+                      "protocol": "http",
+                      "host": [
+                        "localhost"
+                      ],
+                      "port": "{{port}}",
+                      "path": [
+                        "api",
+                        "v1",
+                        "admin",
+                        "menus",
+                        "6abdfc3304e717d520cd107b",
+                        "items",
+                        "6abe99b61c2ad7d15bc3c54b"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
               "name": "Create menu",
               "request": {
                 "method": "POST",
@@ -973,7 +1115,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "//works only once to initialize\n\n// {\n//   \"name\": \"Bottom Menu\",\n//   \"location\": \"bottom\", // top,bottom,left\n//   \"status\": true\n//   \"items\": []\n// }\n\n// {\n//   \"items\": [\n//     {\n//       \"label\": \"Home\",\n//       \"type\": \"url\",\n//       \"url\": \"/\",\n//       \"order\": 1,\n//       \"displayStatus\": true,\n//       \"children\": []\n//     },\n//     {\n//       \"label\": \"Products\",\n//       \"type\": \"group\",\n//       \"order\": 2,\n//       \"displayStatus\": true,\n//       \"children\": [\n//         {\n//           \"label\": \"Electronics\",\n//           \"type\": \"url\",\n//           \"url\": \"/electronics\",\n//           \"order\": 1,\n//           \"displayStatus\": true,\n//           \"children\": []\n//         },\n//         {\n//           \"label\": \"Clothing\",\n//           \"type\": \"url\",\n//           \"url\": \"/clothing\",\n//           \"order\": 2,\n//           \"displayStatus\": true,\n//           \"children\": []\n//         }\n//       ]\n//     },\n//     {\n//       \"label\": \"About\",\n//       \"type\": \"url\",\n//       \"url\": \"/about-us\",\n//       \"order\": 3,\n//       \"displayStatus\": true,\n//       \"children\": []\n//     },\n//     {\n//       \"label\": \"Contact\",\n//       \"type\": \"url\",\n//       \"url\": \"/contact\",\n//       \"order\": 4,\n//       \"displayStatus\": true,\n//       \"children\": []\n//     }\n//   ]\n// }\n\n{\n    \"items\": [\n        {\n     \"label\": \"About\",\n      \"type\": \"page\",\n      \"pageId\": \"6aba3a1ce75925b3aec7e6c6\",\n      \"order\": 3,\n      \"displayStatus\": true,\n      \"children\": []\n        }\n    ]\n}\n",
+                  "raw": "{\n  //\"name\": \"Main Navigation\",\n  \"status\": true\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -981,7 +1123,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6aba9aef5dbbc2b3737071eb",
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abdfc3304e717d520cd107b",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -992,7 +1134,7 @@
                     "v1",
                     "admin",
                     "menus",
-                    "6aba9aef5dbbc2b3737071eb"
+                    "6abdfc3304e717d520cd107b"
                   ]
                 }
               },
@@ -1123,7 +1265,7 @@
           "response": []
         },
         {
-          "name": "public user registration status",
+          "name": "Public user registration status",
           "request": {
             "method": "GET",
             "header": [],
