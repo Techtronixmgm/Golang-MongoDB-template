@@ -162,18 +162,21 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 		pageHandler.GetBySlug,
 	)
 
-	// Public menus
-	api.GET("/menus/:location", menuHandler.GetPublicByLocation)
-
-	// Admin
+	// Admin pages
 	admin := api.Group("/admin")
-	admin.Use(authMiddleware, auth.RequireRoles("admin"))
+	admin.Use(
+		authMiddleware,
+		auth.RequireRoles("admin"),
+	)
 
 	// Admin pages
 	admin.POST("/pages", pageHandler.Create)
 	admin.GET("/pages", pageHandler.List)
 	admin.PATCH("/pages/:id", pageHandler.Update)
 	admin.DELETE("/pages/:id", pageHandler.Delete)
+
+	// Public menus
+	api.GET("/menus/:location", menuHandler.GetPublicByLocation)
 
 	// Admin menus
 	menus := admin.Group("/menus")
@@ -183,7 +186,7 @@ func NewRouter(database *mongo.Database, cfg config.Config) *gin.Engine {
 	menus.PATCH("/:id", menuHandler.Update)
 	menus.DELETE("/:id", menuHandler.Delete)
 
-	// menu items
+	// Menu items
 	menus.POST("/:id/items", menuHandler.AddItem)
 	menus.PATCH("/:id/items/:itemId", menuHandler.UpdateItem)
 	menus.DELETE("/:id/items/:itemId", menuHandler.DeleteItem)
