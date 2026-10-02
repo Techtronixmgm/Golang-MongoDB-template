@@ -108,7 +108,7 @@ func (r *ApplicationSettingsRepository) EnsureDefaults(ctx context.Context) erro
 							"$menu_max_depth",
 							bson.M{
 								"top":    3,
-								"left":   2,
+								"left":   1,
 								"bottom": 2,
 							},
 						},

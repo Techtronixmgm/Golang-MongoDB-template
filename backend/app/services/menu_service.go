@@ -396,8 +396,44 @@ func (s *MenuService) AddItem(
 		}
 	}
 
+	// Get configured maximum depth.
+	maxDepthSettings, err := s.settingsService.GetMenuMaxDepth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var maxDepth int
+
+	switch menu.Location {
+	case models.MenuLocationTop:
+		maxDepth = maxDepthSettings.Top
+
+	case models.MenuLocationLeft:
+		maxDepth = maxDepthSettings.Left
+
+	case models.MenuLocationBottom:
+		maxDepth = maxDepthSettings.Bottom
+
+	default:
+		return nil, ErrInvalidMenuItem
+	}
+
 	// Top-level item.
 	if req.ParentID == nil || strings.TrimSpace(*req.ParentID) == "" {
+		itemDepth := 1
+
+		// Groups cannot exist at the maximum depth because
+		// they would have no room for children.
+		if req.Type == models.MenuItemTypeGroup &&
+			itemDepth >= maxDepth {
+			return nil, fmt.Errorf(
+				"%w: %s menu groups cannot be created at level %d",
+				ErrMenuDepthExceeded,
+				menu.Location,
+				itemDepth,
+			)
+		}
+
 		item.Order = len(menu.Items) + 1
 		menu.Items = append(menu.Items, item)
 
@@ -428,37 +464,27 @@ func (s *MenuService) AddItem(
 			return nil, ErrInvalidMenuItem
 		}
 
-		// Get the configured maximum depth.
-		maxDepthSettings, err := s.settingsService.GetMenuMaxDepth(ctx)
-		if err != nil {
-			return nil, err
-		}
+		itemDepth := location.Depth + 1
 
-		var maxDepth int
-
-		switch menu.Location {
-		case models.MenuLocationTop:
-			maxDepth = maxDepthSettings.Top
-
-		case models.MenuLocationLeft:
-			maxDepth = maxDepthSettings.Left
-
-		case models.MenuLocationBottom:
-			maxDepth = maxDepthSettings.Bottom
-
-		default:
-			return nil, ErrInvalidMenuItem
-		}
-
-		// location.Depth is the depth of the parent.
-		// If parent is already at the maximum depth,
-		// another child cannot be added.
-		if location.Depth >= maxDepth {
+		// No item can be added beyond the configured maximum.
+		if itemDepth > maxDepth {
 			return nil, fmt.Errorf(
 				"%w: %s menu cannot exceed %d levels",
 				ErrMenuDepthExceeded,
 				menu.Location,
 				maxDepth,
+			)
+		}
+
+		// Groups cannot exist at the maximum depth because
+		// they would have no room for children.
+		if req.Type == models.MenuItemTypeGroup &&
+			itemDepth >= maxDepth {
+			return nil, fmt.Errorf(
+				"%w: %s menu groups cannot be created at level %d",
+				ErrMenuDepthExceeded,
+				menu.Location,
+				itemDepth,
 			)
 		}
 
