@@ -151,9 +151,14 @@ func NewRouter(
 	userHandler := handler.NewUserHandler(userService)
 
 	pageRepository := mongorepo.NewPageRepository(database)
+	menuRepository := mongorepo.NewMenuRepository(database)
+	menuService := services.NewMenuService(
+		menuRepository,
+		pageRepository,
+	)
 	pageService := services.NewPageService(pageRepository)
 	pageHandler := handler.NewPageHandler(pageService)
-
+	menuHandler := handler.NewMenuHandler(menuService)
 	settingsHandler := handler.NewSettingsHandler(settingsService)
 
 	// ------------------------------------------------------------------
@@ -350,10 +355,28 @@ func NewRouter(
 		auth.RequireRoles("admin"),
 	)
 
+	// Admin pages
 	admin.POST("/pages", pageHandler.Create)
 	admin.GET("/pages", pageHandler.List)
 	admin.PATCH("/pages/:id", pageHandler.Update)
 	admin.DELETE("/pages/:id", pageHandler.Delete)
+
+	// Public menus
+	api.GET("/menus/:location", menuHandler.GetPublicByLocation)
+
+	// Admin menus
+	menus := admin.Group("/menus")
+	menus.POST("", menuHandler.Create)
+	menus.GET("", menuHandler.List)
+	menus.GET("/:id", menuHandler.Get)
+	menus.PATCH("/:id", menuHandler.Update)
+	menus.DELETE("/:id", menuHandler.Delete)
+
+	// Menu items
+	menus.POST("/:id/items", menuHandler.AddItem)
+	menus.PATCH("/:id/items/:itemId", menuHandler.UpdateItem)
+	menus.DELETE("/:id/items/:itemId", menuHandler.DeleteItem)
+	menus.PATCH("/:id/items/:itemId/order", menuHandler.MoveItem)
 
 	return r
 }
