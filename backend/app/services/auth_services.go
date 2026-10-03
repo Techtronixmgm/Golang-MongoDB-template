@@ -23,7 +23,6 @@ type AuthService struct {
 	refreshTokenRepository repository.RefreshTokenRepository
 	settingsService        *SettingsService
 	totpService            *TOTPService
-	totpEncryptionService  *TOTPEncryptionService
 	config                 config.Config
 }
 
@@ -32,7 +31,6 @@ func NewAuthService(
 	refreshTokenRepository repository.RefreshTokenRepository,
 	settingsService *SettingsService,
 	totpService *TOTPService,
-	totpEncryptionService *TOTPEncryptionService,
 	cfg config.Config,
 ) *AuthService {
 	return &AuthService{
@@ -40,7 +38,6 @@ func NewAuthService(
 		refreshTokenRepository: refreshTokenRepository,
 		settingsService:        settingsService,
 		totpService:            totpService,
-		totpEncryptionService:  totpEncryptionService,
 		config:                 cfg,
 	}
 }
@@ -464,9 +461,15 @@ func (s *AuthService) VerifyTwoFactorLogin(
 	backupCodesLow := backupCodesRemaining <= s.config.BackupCodeLowThreshold
 
 	if len(code) == 6 {
-		decryptedSecret, err := s.totpEncryptionService.Decrypt(
+		totpEncryptionService, err := s.getTOTPEncryptionService()
+		if err != nil {
+			return nil, err
+		}
+
+		decryptedSecret, err := totpEncryptionService.Decrypt(
 			user.TwoFactorSecret,
 		)
+
 		if err != nil {
 			return nil, apperrors.ErrInvalidTOTPCode
 		}
@@ -576,4 +579,13 @@ func (s *AuthService) verifyBackupCode(
 	}
 
 	return 0, apperrors.ErrInvalidBackupCode
+}
+
+func (s *AuthService) getTOTPEncryptionService() (
+	*TOTPEncryptionService,
+	error,
+) {
+	return NewTOTPEncryptionService(
+		s.config.TOTPEncryptionKey,
+	)
 }

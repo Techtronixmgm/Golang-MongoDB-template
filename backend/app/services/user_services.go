@@ -24,23 +24,20 @@ import (
 )
 
 type UserService struct {
-	userRepository        repository.UserRepository
-	totpService           *TOTPService
-	totpEncryptionService *TOTPEncryptionService
-	config                config.Config
+	userRepository repository.UserRepository
+	totpService    *TOTPService
+	config         config.Config
 }
 
 func NewUserService(
 	userRepository repository.UserRepository,
 	totpService *TOTPService,
-	totpEncryptionService *TOTPEncryptionService,
 	cfg config.Config,
 ) *UserService {
 	return &UserService{
-		userRepository:        userRepository,
-		totpService:           totpService,
-		totpEncryptionService: totpEncryptionService,
-		config:                cfg,
+		userRepository: userRepository,
+		totpService:    totpService,
+		config:         cfg,
 	}
 }
 
@@ -683,7 +680,12 @@ func (s *UserService) StartTwoFactorSetup(
 		return "", "", err
 	}
 
-	encryptedSecret, err := s.totpEncryptionService.Encrypt(
+	totpEncryptionService, err := s.getTOTPEncryptionService()
+	if err != nil {
+		return "", "", err
+	}
+
+	encryptedSecret, err := totpEncryptionService.Encrypt(
 		setup.Secret,
 	)
 	if err != nil {
@@ -731,7 +733,12 @@ func (s *UserService) VerifyTwoFactorSetup(
 		return nil, apperrors.ErrTwoFactorSetupNotStarted
 	}
 
-	decryptedSecret, err := s.totpEncryptionService.Decrypt(
+	totpEncryptionService, err := s.getTOTPEncryptionService()
+	if err != nil {
+		return nil, err
+	}
+
+	decryptedSecret, err := totpEncryptionService.Decrypt(
 		pendingSecret,
 	)
 	if err != nil {
@@ -745,7 +752,7 @@ func (s *UserService) VerifyTwoFactorSetup(
 		return nil, err
 	}
 
-	encryptedSecret, err := s.totpEncryptionService.Encrypt(
+	encryptedSecret, err := totpEncryptionService.Encrypt(
 		decryptedSecret,
 	)
 	if err != nil {
@@ -796,9 +803,15 @@ func (s *UserService) DisableTwoFactor(
 		return apperrors.ErrTwoFactorNotEnabled
 	}
 
-	decryptedSecret, err := s.totpEncryptionService.Decrypt(
+	totpEncryptionService, err := s.getTOTPEncryptionService()
+	if err != nil {
+		return err
+	}
+
+	decryptedSecret, err := totpEncryptionService.Decrypt(
 		user.TwoFactorSecret,
 	)
+
 	if err != nil {
 		return err
 	}
@@ -900,9 +913,15 @@ func (s *UserService) RegenerateBackupCodes(
 
 	// A TOTP code is exactly 6 digits.
 	if len(code) == 6 {
-		decryptedSecret, err := s.totpEncryptionService.Decrypt(
+		totpEncryptionService, err := s.getTOTPEncryptionService()
+		if err != nil {
+			return nil, err
+		}
+
+		decryptedSecret, err := totpEncryptionService.Decrypt(
 			user.TwoFactorSecret,
 		)
+
 		if err != nil {
 			return nil, apperrors.ErrInvalidTOTPCode
 		}
@@ -974,4 +993,13 @@ func (s *UserService) ResetTwoFactor(
 	user.BackupCodeHashes = nil
 
 	return s.userRepository.Update(ctx, user)
+}
+
+func (s *UserService) getTOTPEncryptionService() (
+	*TOTPEncryptionService,
+	error,
+) {
+	return NewTOTPEncryptionService(
+		s.config.TOTPEncryptionKey,
+	)
 }

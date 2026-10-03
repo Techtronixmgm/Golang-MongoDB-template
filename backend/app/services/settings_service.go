@@ -71,11 +71,7 @@ func (s *SettingsService) UpdateTwoFactorEnabled(
 	updatedBy string,
 ) error {
 	if enabled {
-		if err := s.config.ValidateTOTPEncryptionKey(); err != nil {
-			return err
-		}
-
-		if err := s.config.ValidateBackupCodeConfig(); err != nil {
+		if err := s.validateTwoFactorConfig(); err != nil {
 			return err
 		}
 	}
@@ -99,15 +95,7 @@ func (s *SettingsService) ValidateTwoFactorStartupConfig(
 		return nil
 	}
 
-	if err := s.config.ValidateTOTPEncryptionKey(); err != nil {
-		return err
-	}
-
-	// if err := s.config.ValidateBackupCodeConfig(); err != nil {
-	// 	return err
-	// }
-
-	return nil
+	return s.validateTwoFactorConfig()
 }
 
 func (s *SettingsService) UpdateLoginIdentifiers(
@@ -223,4 +211,16 @@ func (s *SettingsService) UpdateMenuMaxDepth(
 		bottom,
 		updatedBy,
 	)
+}
+
+func (s *SettingsService) validateTwoFactorConfig() error {
+	if err := s.config.ValidateTOTPEncryptionKey(); err != nil {
+		return err
+	}
+
+	if err := s.config.ValidateBackupCodeConfig(); err != nil {
+		return err
+	}
+
+	return nil
 }

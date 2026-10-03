@@ -66,13 +66,6 @@ func NewRouter(
 	// Dependencies
 	// ------------------------------------------------------------------
 
-	totpEncryptionService, err := services.NewTOTPEncryptionService(
-		cfg.TOTPEncryptionKey,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	userRepository := mongorepo.NewUserRepository(database)
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(database)
@@ -85,7 +78,6 @@ func NewRouter(
 		refreshTokenRepository,
 		settingsService,
 		totpService,
-		totpEncryptionService,
 		cfg,
 	)
 
@@ -146,7 +138,7 @@ func NewRouter(
 	// Services / handlers
 	// ------------------------------------------------------------------
 
-	userService := services.NewUserService(userRepository, totpService, totpEncryptionService, cfg)
+	userService := services.NewUserService(userRepository, totpService, cfg)
 	authHandler := handler.NewAuthHandler(authService, userService, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
