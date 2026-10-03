@@ -286,6 +286,14 @@ func (s *AuthService) Login(
 		return nil, apperrors.ErrInvalidCredentials
 	}
 
+	backupCodesRemaining := 0
+	backupCodesLow := false
+
+	if user.TwoFactorEnabled {
+		backupCodesRemaining = len(user.BackupCodeHashes)
+		backupCodesLow = backupCodesRemaining <= s.config.BackupCodeLowThreshold
+	}
+
 	twoFactorEnabled, err := s.settingsService.IsTwoFactorEnabled(ctx)
 
 	if err != nil {
@@ -303,9 +311,11 @@ func (s *AuthService) Login(
 		}
 
 		return &dto.LoginResult{
-			User:              user,
-			TwoFactorRequired: true,
-			ChallengeToken:    challengeToken,
+			User:                 user,
+			TwoFactorRequired:    true,
+			ChallengeToken:       challengeToken,
+			BackupCodesRemaining: backupCodesRemaining,
+			BackupCodesLow:       backupCodesLow,
 		}, nil
 	}
 
@@ -351,10 +361,12 @@ func (s *AuthService) Login(
 	user.LastLoginAt = &now
 
 	return &dto.LoginResult{
-		User:          user,
-		AccessToken:   accessToken,
-		RefreshToken:  refreshToken,
-		RefreshExpiry: refreshExpiry,
+		User:                 user,
+		AccessToken:          accessToken,
+		RefreshToken:         refreshToken,
+		RefreshExpiry:        refreshExpiry,
+		BackupCodesRemaining: backupCodesRemaining,
+		BackupCodesLow:       backupCodesLow,
 	}, nil
 }
 
@@ -490,7 +502,7 @@ func (s *AuthService) VerifyTwoFactorLogin(
 			return nil, apperrors.ErrInvalidTOTPCode
 		}
 
-		backupCodesLow = backupCodesRemaining <= 4
+		backupCodesLow = backupCodesRemaining <= s.config.BackupCodeLowThreshold
 	}
 
 	accessToken, err := auth.GenerateToken(
