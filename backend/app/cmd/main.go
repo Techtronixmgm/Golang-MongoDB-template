@@ -60,15 +60,21 @@ func main() {
 	cleanupCtx, cleanupCancel := context.WithCancel(context.Background())
 	defer cleanupCancel()
 
-	// log.Printf(
-	// 	"Refresh token cleanup retention: %d days",
-	// 	cfg.RefreshTokenRevokedRetentionDays,
-	// )
+	log.Printf(
+		"Refresh token revoked cleanup retention: %d days",
+		cfg.RefreshTokenRevokedRetentionDays,
+	)
+
+	log.Printf(
+		"Refresh token expired cleanup retention: %d days",
+		cfg.RefreshTokenExpiredRetentionDays,
+	)
 
 	go startRefreshTokenCleanup(
 		cleanupCtx,
 		refreshTokenRepository,
 		cfg.RefreshTokenRevokedRetentionDays,
+		cfg.RefreshTokenExpiredRetentionDays,
 	)
 
 	settingsRepository := mongorepo.NewApplicationSettingsRepository(db)
@@ -100,8 +106,6 @@ func main() {
 	}
 
 	gin.SetMode(cfg.GinMode)
-
-	// middleware.StartCleanup()
 
 	engine := router.NewRouter(client, db, cfg)
 
@@ -148,26 +152,41 @@ func main() {
 func startRefreshTokenCleanup(
 	ctx context.Context,
 	repo repository.RefreshTokenRepository,
-	retentionDays int,
+	revokedRetentionDays int,
+	expiredRetentionDays int,
 ) {
 	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 
 	cleanup := func() {
-		before := time.Now().UTC().AddDate(0, 0, -retentionDays)
+		now := time.Now().UTC()
+		revokedBefore := now.AddDate(0, 0, -revokedRetentionDays)
+		expiredBefore := now.AddDate(0, 0, -expiredRetentionDays)
 
 		cleanupCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
-		if err := repo.DeleteRevokedBefore(cleanupCtx, before); err != nil {
-			log.Printf("Refresh token cleanup failed: %v", err)
+		// 1. Delete revoked tokens
+		if err := repo.DeleteRevokedBefore(cleanupCtx, revokedBefore); err != nil {
+			log.Printf("Revoked token cleanup failed: %v", err)
 			return
 		}
 
-		// log.Printf(
-		// 	"Refresh token cleanup completed; removed revoked tokens older than %d days",
-		// 	retentionDays,
-		// )
+		log.Printf(
+			"Refresh token cleanup completed; removed revoked tokens older than %d days",
+			revokedRetentionDays,
+		)
+
+		// 2. Delete expired tokens
+		if err := repo.DeleteExpiredBefore(cleanupCtx, expiredBefore); err != nil {
+			log.Printf("Expired token cleanup failed: %v", err)
+			return
+		}
+
+		log.Printf(
+			"Refresh token cleanup completed; removed expired tokens older than %d days",
+			expiredRetentionDays,
+		)
 	}
 
 	// Run once when the application starts.

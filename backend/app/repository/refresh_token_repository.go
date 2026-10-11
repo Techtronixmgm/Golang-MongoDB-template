@@ -15,4 +15,5 @@ type RefreshTokenRepository interface {
 	RevokeAllByUserID(ctx context.Context, userID string) error
 
 	DeleteRevokedBefore(ctx context.Context, before time.Time) error
+	DeleteExpiredBefore(ctx context.Context, before time.Time) error
 }

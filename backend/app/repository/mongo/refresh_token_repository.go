@@ -177,3 +177,19 @@ func (r *RefreshTokenRepository) DeleteRevokedBefore(
 
 	return err
 }
+
+func (r *RefreshTokenRepository) DeleteExpiredBefore(
+	ctx context.Context,
+	before time.Time,
+) error {
+	_, err := r.collection.DeleteMany(
+		ctx,
+		bson.M{
+			"expires_at": bson.M{
+				"$lt": before,
+			},
+		},
+	)
+
+	return err
+}

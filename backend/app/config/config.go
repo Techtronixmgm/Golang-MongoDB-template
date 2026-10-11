@@ -32,6 +32,7 @@ type Config struct {
 	CookieSecure                     bool
 	GinMode                          string
 	RefreshTokenRevokedRetentionDays int
+	RefreshTokenExpiredRetentionDays int
 
 	CookieSameSite         string
 	AllowedOrigins         []string
@@ -207,6 +208,26 @@ func Load() (Config, error) {
 		}
 	}
 
+	// Refresh token expired retention.
+	// Defaults to 7 days when the environment variable is not set.
+	refreshTokenExpiredRetentionDays := 7
+
+	retentionDaysExpiredStr := strings.TrimSpace(
+		os.Getenv("REFRESH_TOKEN_EXPIRED_RETENTION_DAYS"),
+	)
+
+	if retentionDaysExpiredStr != "" {
+		refreshTokenExpiredRetentionDays, err = strconv.Atoi(
+			retentionDaysExpiredStr,
+		)
+		if err != nil {
+			return Config{}, fmt.Errorf(
+				"invalid REFRESH_TOKEN_EXPIRED_RETENTION_DAYS: %w",
+				err,
+			)
+		}
+	}
+
 	tOTPIssuer, err := extractEnv("TOTP_ISSUER")
 	if err != nil {
 		return Config{}, err
@@ -268,6 +289,7 @@ func Load() (Config, error) {
 		CookieSecure:                     cookieSecure,
 		GinMode:                          ginMode,
 		RefreshTokenRevokedRetentionDays: refreshTokenRevokedRetentionDays,
+		RefreshTokenExpiredRetentionDays: refreshTokenExpiredRetentionDays,
 		CookieSameSite:                   cookieSameSite,
 		AllowedOrigins:                   allowedOrigins,
 		TOTPIssuer:                       tOTPIssuer,
@@ -316,6 +338,12 @@ func (c Config) Validate() error {
 	if c.RefreshTokenRevokedRetentionDays <= 0 {
 		return errors.New(
 			"refresh token revoked retention days must be greater than zero",
+		)
+	}
+
+	if c.RefreshTokenExpiredRetentionDays <= 0 {
+		return errors.New(
+			"refresh token expired retention days must be greater than zero",
 		)
 	}
 
