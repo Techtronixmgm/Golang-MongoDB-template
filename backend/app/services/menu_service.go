@@ -361,43 +361,59 @@ func (s *MenuService) AddItem(
 			return nil, apperrors.ErrInvalidMenuItem
 		}
 
-		pageID := strings.TrimSpace(*req.PageID)
-
-		_, err := s.pageRepository.FindByID(ctx, pageID)
-		if err != nil {
-			if errors.Is(err, apperrors.ErrPageNotFound) {
-				return nil, apperrors.ErrPageNotFound
-			}
-
-			return nil, err
+		if item.URL != "" {
+			return nil, apperrors.ErrInvalidMenuItem
 		}
+
+		pageID := strings.TrimSpace(*req.PageID)
 
 		objectID, err := bson.ObjectIDFromHex(pageID)
 		if err != nil {
 			return nil, apperrors.ErrInvalidMenuItem
 		}
 
+		_, err = s.pageRepository.FindByID(ctx, pageID)
+		if err != nil {
+			if errors.Is(err, apperrors.ErrPageNotFound) {
+				return nil, apperrors.ErrPageNotFound
+			}
+			return nil, err
+		}
+
 		item.PageID = &objectID
 
-		if item.URL != "" {
-			return nil, apperrors.ErrInvalidMenuItem
-		}
-
 	case models.MenuItemTypeURL:
-		if item.URL == "" {
-			return nil, apperrors.ErrInvalidMenuItem
-		}
-
-		if req.PageID != nil {
+		if item.URL == "" || req.PageID != nil {
 			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 	case models.MenuItemTypeGroup:
-		if item.URL != "" || req.PageID != nil {
+		// Groups may have a URL, a Page ID, or neither.
+		// They cannot have both destinations.
+		if item.URL != "" && req.PageID != nil &&
+			strings.TrimSpace(*req.PageID) != "" {
 			return nil, apperrors.ErrInvalidMenuItem
 		}
-	}
 
+		if req.PageID != nil && strings.TrimSpace(*req.PageID) != "" {
+			pageID := strings.TrimSpace(*req.PageID)
+
+			_, err := s.pageRepository.FindByID(ctx, pageID)
+			if err != nil {
+				if errors.Is(err, apperrors.ErrPageNotFound) {
+					return nil, apperrors.ErrPageNotFound
+				}
+				return nil, err
+			}
+
+			objectID, err := bson.ObjectIDFromHex(pageID)
+			if err != nil {
+				return nil, apperrors.ErrInvalidMenuItem
+			}
+
+			item.PageID = &objectID
+		}
+	}
 	// Get configured maximum depth.
 	maxDepthSettings, err := s.settingsService.GetMenuMaxDepth(ctx)
 	if err != nil {
@@ -521,10 +537,7 @@ func (s *MenuService) UpdateItem(
 	itemID string,
 	req *dto.UpdateMenuItemRequest,
 ) (*models.Menu, error) {
-	menu, err := s.menuRepository.FindByID(
-		ctx,
-		menuID,
-	)
+	menu, err := s.menuRepository.FindByID(ctx, menuID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrMenuNotFound) {
 			return nil, apperrors.ErrMenuNotFound
@@ -553,9 +566,9 @@ func (s *MenuService) UpdateItem(
 
 	item := location.Item
 
+	// Update label.
 	if req.Label != nil {
 		label := strings.TrimSpace(*req.Label)
-
 		if label == "" {
 			return nil, apperrors.ErrInvalidMenuItem
 		}
@@ -563,10 +576,12 @@ func (s *MenuService) UpdateItem(
 		item.Label = label
 	}
 
+	// Update display status.
 	if req.DisplayStatus != nil {
 		item.DisplayStatus = *req.DisplayStatus
 	}
 
+	// Update type.
 	if req.Type != nil {
 		if !isValidMenuItemType(*req.Type) {
 			return nil, apperrors.ErrInvalidMenuItem
@@ -582,27 +597,66 @@ func (s *MenuService) UpdateItem(
 			item.PageID = nil
 
 		case models.MenuItemTypeGroup:
-			item.PageID = nil
-			item.URL = ""
+			// Destination validation is handled below.
 		}
 	}
 
-	if req.PageID != nil {
-		pageID := strings.TrimSpace(*req.PageID)
+	// Normalize incoming destinations.
+	var pageID string
+	var url string
 
-		if item.Type != models.MenuItemTypePage {
-			if pageID != "" {
-				return nil, apperrors.ErrInvalidMenuItem
-			}
-		} else {
+	if req.PageID != nil {
+		pageID = strings.TrimSpace(*req.PageID)
+	}
+
+	if req.URL != nil {
+		url = strings.TrimSpace(*req.URL)
+	}
+
+	// A group cannot receive two non-empty destinations
+	// in the same request.
+	if item.Type == models.MenuItemTypeGroup &&
+		req.PageID != nil &&
+		req.URL != nil &&
+		pageID != "" &&
+		url != "" {
+		return nil, apperrors.ErrInvalidMenuItem
+	}
+
+	// Update Page ID.
+	if req.PageID != nil {
+		switch item.Type {
+		case models.MenuItemTypePage:
 			if pageID == "" {
 				return nil, apperrors.ErrInvalidMenuItem
 			}
 
-			_, err := s.pageRepository.FindByID(
-				ctx,
-				pageID,
-			)
+		case models.MenuItemTypeURL:
+			if pageID != "" {
+				return nil, apperrors.ErrInvalidMenuItem
+			}
+
+		case models.MenuItemTypeGroup:
+			if pageID == "" {
+				item.PageID = nil
+			} else {
+				// Setting a Page ID replaces the URL.
+				item.URL = ""
+			}
+		}
+
+		if pageID != "" {
+			if item.Type != models.MenuItemTypePage &&
+				item.Type != models.MenuItemTypeGroup {
+				return nil, apperrors.ErrInvalidMenuItem
+			}
+
+			objectID, err := bson.ObjectIDFromHex(pageID)
+			if err != nil {
+				return nil, apperrors.ErrInvalidMenuItem
+			}
+
+			_, err = s.pageRepository.FindByID(ctx, pageID)
 			if err != nil {
 				if errors.Is(err, apperrors.ErrPageNotFound) {
 					return nil, apperrors.ErrPageNotFound
@@ -611,21 +665,14 @@ func (s *MenuService) UpdateItem(
 				return nil, err
 			}
 
-			objectID, err := bson.ObjectIDFromHex(pageID)
-			if err != nil {
-				return nil, apperrors.ErrInvalidMenuItem
-			}
-
 			item.PageID = &objectID
 		}
 	}
 
+	// Update URL.
 	if req.URL != nil {
-		url := strings.TrimSpace(*req.URL)
-
 		switch item.Type {
-		case models.MenuItemTypePage,
-			models.MenuItemTypeGroup:
+		case models.MenuItemTypePage:
 			if url != "" {
 				return nil, apperrors.ErrInvalidMenuItem
 			}
@@ -638,27 +685,67 @@ func (s *MenuService) UpdateItem(
 			}
 
 			item.URL = url
+
+		case models.MenuItemTypeGroup:
+			if url != "" {
+				// Setting a URL replaces the Page ID.
+				item.PageID = nil
+			}
+
+			item.URL = url
 		}
 	}
 
+	// Validate the final destination state.
 	switch item.Type {
 	case models.MenuItemTypePage:
-		if item.PageID == nil {
+		if item.PageID == nil || item.URL != "" {
 			return nil, apperrors.ErrInvalidMenuItem
 		}
-
-		item.URL = ""
 
 	case models.MenuItemTypeURL:
-		if item.URL == "" {
+		if item.URL == "" || item.PageID != nil {
 			return nil, apperrors.ErrInvalidMenuItem
 		}
 
-		item.PageID = nil
-
 	case models.MenuItemTypeGroup:
-		item.PageID = nil
-		item.URL = ""
+		if item.URL != "" && item.PageID != nil {
+			return nil, apperrors.ErrInvalidMenuItem
+		}
+	}
+
+	// Get configured maximum depth.
+	maxDepthSettings, err := s.settingsService.GetMenuMaxDepth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var maxDepth int
+
+	switch menu.Location {
+	case models.MenuLocationTop:
+		maxDepth = maxDepthSettings.Top
+
+	case models.MenuLocationLeft:
+		maxDepth = maxDepthSettings.Left
+
+	case models.MenuLocationBottom:
+		maxDepth = maxDepthSettings.Bottom
+
+	default:
+		return nil, apperrors.ErrInvalidMenuItem
+	}
+
+	// Groups cannot exist at the maximum depth because
+	// they would have no room for children.
+	if item.Type == models.MenuItemTypeGroup &&
+		location.Depth >= maxDepth {
+		return nil, fmt.Errorf(
+			"%w: %s menu groups cannot be created at level %d",
+			apperrors.ErrMenuDepthExceeded,
+			menu.Location,
+			location.Depth,
+		)
 	}
 
 	menu.UpdatedAt = time.Now()

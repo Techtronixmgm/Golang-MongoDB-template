@@ -338,6 +338,11 @@ func (h *MenuHandler) UpdateItem(c *gin.Context) {
 				"error": err.Error(),
 			})
 
+		case errors.Is(err, apperrors.ErrMenuDepthExceeded):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "unable to update menu item",
