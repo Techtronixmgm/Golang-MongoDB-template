@@ -280,3 +280,36 @@ func (h *PageHandler) Delete(c *gin.Context) {
 		"message": "page deleted successfully",
 	})
 }
+
+func (h *PageHandler) GetByID(c *gin.Context) {
+	id := strings.TrimSpace(c.Param("id"))
+
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "page id is required",
+		})
+		return
+	}
+
+	page, err := h.pageService.GetByID(
+		c.Request.Context(),
+		id,
+	)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "page not found",
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "unable to fetch page",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"page": page,
+	})
+}

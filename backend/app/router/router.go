@@ -361,6 +361,7 @@ func NewRouter(
 	// Admin pages
 	admin.POST("/pages", pageHandler.Create)
 	admin.GET("/pages", pageHandler.List)
+	admin.GET("/pages/:id", pageHandler.GetByID)
 	admin.PATCH("/pages/:id", pageHandler.Update)
 	admin.DELETE("/pages/:id", pageHandler.Delete)
 
