@@ -199,10 +199,7 @@ func (s *MenuService) buildPublicMenuItems(
 	)
 
 	for _, item := range items {
-
-		// Hidden item is not returned.
-		// For a group, this also means its
-		// children are not returned.
+		// Skip hidden items and their descendants.
 		if !item.DisplayStatus {
 			continue
 		}
@@ -254,10 +251,31 @@ func (s *MenuService) buildPublicMenuItems(
 			response.URL = "/pages/" + page.Slug
 
 		case models.MenuItemTypeURL:
-			// Custom URL is already stored
-			// in response.URL.
+			// Keep the configured URL.
+			// URL may be internal or external.
 
 		case models.MenuItemTypeGroup:
+			// A group may link to a page, a URL,
+			// or have no destination.
+			if item.PageID != nil {
+				page, err := s.pageRepository.FindByID(
+					ctx,
+					item.PageID.Hex(),
+				)
+				if err != nil {
+					if errors.Is(err, apperrors.ErrPageNotFound) {
+						return nil, apperrors.ErrPageNotFound
+					}
+					return nil, err
+				}
+
+				pageID := item.PageID.Hex()
+				response.PageID = &pageID
+				response.URL = "/pages/" + page.Slug
+			}
+
+			// Preserve the group's child hierarchy,
+			// regardless of whether the group has a destination.
 			children, err := s.buildPublicMenuItems(
 				ctx,
 				item.Children,
@@ -267,6 +285,9 @@ func (s *MenuService) buildPublicMenuItems(
 			}
 
 			response.Children = children
+
+		default:
+			return nil, apperrors.ErrInvalidMenuItem
 		}
 
 		result = append(result, response)
