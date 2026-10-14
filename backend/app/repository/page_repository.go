@@ -17,6 +17,7 @@ type PageRepository interface {
 	Create(ctx context.Context, page *models.Page) error
 
 	FindByID(ctx context.Context, id string) (*models.Page, error)
+	FindByIDs(ctx context.Context, ids []string) (map[string]*models.Page, error)
 	FindBySlug(ctx context.Context, slug string) (*models.Page, error)
 
 	List(

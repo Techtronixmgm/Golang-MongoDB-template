@@ -205,3 +205,58 @@ func (r *PageRepository) Delete(
 
 	return nil
 }
+
+func (r *PageRepository) FindByIDs(
+	ctx context.Context,
+	ids []string,
+) (map[string]*models.Page, error) {
+	result := make(map[string]*models.Page, len(ids))
+
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	// Convert string IDs to MongoDB ObjectIDs.
+	objectIDs := make([]bson.ObjectID, 0, len(ids))
+
+	for _, id := range ids {
+		objectID, err := bson.ObjectIDFromHex(id)
+		if err != nil {
+			return nil, apperrors.ErrInvalidMenuItem
+		}
+
+		objectIDs = append(objectIDs, objectID)
+	}
+
+	filter := bson.D{
+		{Key: "_id", Value: bson.D{
+			{Key: "$in", Value: objectIDs},
+		}},
+	}
+
+	projection := bson.D{
+		{Key: "_id", Value: 1},
+		{Key: "slug", Value: 1},
+	}
+
+	cursor, err := r.collection.Find(
+		ctx,
+		filter,
+		options.Find().SetProjection(projection),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var pages []*models.Page
+	if err := cursor.All(ctx, &pages); err != nil {
+		return nil, err
+	}
+
+	for _, page := range pages {
+		result[page.ID.Hex()] = page
+	}
+
+	return result, nil
+}

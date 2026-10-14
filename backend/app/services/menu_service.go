@@ -172,9 +172,26 @@ func (s *MenuService) GetPublicByLocation(
 		return nil, apperrors.ErrMenuInactive
 	}
 
+	// Collect unique page IDs from all menu levels.
+	pageIDSet := make(map[string]struct{})
+	collectMenuPageIDs(menu.Items, pageIDSet)
+
+	pageIDs := make([]string, 0, len(pageIDSet))
+	for id := range pageIDSet {
+		pageIDs = append(pageIDs, id)
+	}
+
+	// Fetch all referenced pages in one database query.
+	pagesByID, err := s.pageRepository.FindByIDs(ctx, pageIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build the public response using the fetched pages.
 	items, err := s.buildPublicMenuItems(
 		ctx,
 		menu.Items,
+		pagesByID,
 	)
 	if err != nil {
 		return nil, err
@@ -191,6 +208,7 @@ func (s *MenuService) GetPublicByLocation(
 func (s *MenuService) buildPublicMenuItems(
 	ctx context.Context,
 	items []models.MenuItem,
+	pagesByID map[string]*models.Page,
 ) ([]dto.PublicMenuItemResponse, error) {
 	result := make(
 		[]dto.PublicMenuItemResponse,
@@ -225,19 +243,9 @@ func (s *MenuService) buildPublicMenuItems(
 				return nil, apperrors.ErrInvalidMenuItem
 			}
 
-			page, err := s.pageRepository.FindByID(
-				ctx,
-				item.PageID.Hex(),
-			)
-			if err != nil {
-				if errors.Is(
-					err,
-					apperrors.ErrPageNotFound,
-				) {
-					return nil, apperrors.ErrPageNotFound
-				}
-
-				return nil, err
+			page, ok := pagesByID[item.PageID.Hex()]
+			if !ok {
+				return nil, apperrors.ErrPageNotFound
 			}
 
 			pageID := item.PageID.Hex()
@@ -258,15 +266,9 @@ func (s *MenuService) buildPublicMenuItems(
 			// A group may link to a page, a URL,
 			// or have no destination.
 			if item.PageID != nil {
-				page, err := s.pageRepository.FindByID(
-					ctx,
-					item.PageID.Hex(),
-				)
-				if err != nil {
-					if errors.Is(err, apperrors.ErrPageNotFound) {
-						return nil, apperrors.ErrPageNotFound
-					}
-					return nil, err
+				page, ok := pagesByID[item.PageID.Hex()]
+				if !ok {
+					return nil, apperrors.ErrPageNotFound
 				}
 
 				pageID := item.PageID.Hex()
@@ -279,6 +281,7 @@ func (s *MenuService) buildPublicMenuItems(
 			children, err := s.buildPublicMenuItems(
 				ctx,
 				item.Children,
+				pagesByID,
 			)
 			if err != nil {
 				return nil, err
@@ -1060,5 +1063,20 @@ func getMenuMaxDepth(
 
 	default:
 		return 0, apperrors.ErrInvalidMenuItem
+	}
+}
+
+func collectMenuPageIDs(
+	items []models.MenuItem,
+	pageIDs map[string]struct{},
+) {
+	for _, item := range items {
+		if item.PageID != nil {
+			pageIDs[item.PageID.Hex()] = struct{}{}
+		}
+
+		if len(item.Children) > 0 {
+			collectMenuPageIDs(item.Children, pageIDs)
+		}
 	}
 }
