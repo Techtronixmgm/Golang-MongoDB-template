@@ -444,20 +444,12 @@ func (s *MenuService) AddItem(
 		return nil, err
 	}
 
-	var maxDepth int
-
-	switch menu.Location {
-	case models.MenuLocationTop:
-		maxDepth = maxDepthSettings.Top
-
-	case models.MenuLocationLeft:
-		maxDepth = maxDepthSettings.Left
-
-	case models.MenuLocationBottom:
-		maxDepth = maxDepthSettings.Bottom
-
-	default:
-		return nil, apperrors.ErrInvalidMenuItem
+	maxDepth, err := getMenuMaxDepth(
+		menu.Location,
+		maxDepthSettings,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	// Top-level item.
@@ -744,20 +736,12 @@ func (s *MenuService) UpdateItem(
 		return nil, err
 	}
 
-	var maxDepth int
-
-	switch menu.Location {
-	case models.MenuLocationTop:
-		maxDepth = maxDepthSettings.Top
-
-	case models.MenuLocationLeft:
-		maxDepth = maxDepthSettings.Left
-
-	case models.MenuLocationBottom:
-		maxDepth = maxDepthSettings.Bottom
-
-	default:
-		return nil, apperrors.ErrInvalidMenuItem
+	maxDepth, err := getMenuMaxDepth(
+		menu.Location,
+		maxDepthSettings,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	// Groups cannot exist at the maximum depth because
@@ -934,72 +918,6 @@ func (s *MenuService) MoveItem(
 	}
 
 	return menu, nil
-}
-
-func findMenuItemWithDepth(
-	items []models.MenuItem,
-	id bson.ObjectID,
-	depth int,
-) (*models.MenuItem, int, error) {
-	for i := range items {
-		item := &items[i]
-
-		if item.ID == id {
-			return item, depth, nil
-		}
-
-		if len(item.Children) == 0 {
-			continue
-		}
-
-		found, foundDepth, err := findMenuItemWithDepth(
-			item.Children,
-			id,
-			depth+1,
-		)
-		if err == nil {
-			return found, foundDepth, nil
-		}
-
-		if !errors.Is(err, apperrors.ErrMenuItemNotFound) {
-			return nil, 0, err
-		}
-	}
-
-	return nil, 0, apperrors.ErrMenuItemNotFound
-}
-
-func findMenuItem(
-	items []models.MenuItem,
-	id bson.ObjectID,
-	depth int,
-) (*models.MenuItem, []models.MenuItem, int, error) {
-	for i := range items {
-		item := &items[i]
-
-		if item.ID == id {
-			return item, items, depth, nil
-		}
-
-		if len(item.Children) == 0 {
-			continue
-		}
-
-		found, siblings, foundDepth, err := findMenuItem(
-			item.Children,
-			id,
-			depth+1,
-		)
-		if err == nil {
-			return found, siblings, foundDepth, nil
-		}
-
-		if !errors.Is(err, apperrors.ErrMenuItemNotFound) {
-			return nil, nil, 0, err
-		}
-	}
-
-	return nil, nil, 0, apperrors.ErrMenuItemNotFound
 }
 
 type menuItemLocation struct {
