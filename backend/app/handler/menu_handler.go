@@ -443,3 +443,19 @@ func (h *MenuHandler) MoveItem(c *gin.Context) {
 		"data":    menu,
 	})
 }
+
+func (h *MenuHandler) GetAllPublic(c *gin.Context) {
+	menus, err := h.menuService.GetAllPublic(
+		c.Request.Context(),
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "unable to get menus",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"menus": menus,
+	})
+}

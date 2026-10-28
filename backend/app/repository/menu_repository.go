@@ -12,4 +12,5 @@ type MenuRepository interface {
 	List(ctx context.Context) ([]*models.Menu, error)
 	Update(ctx context.Context, id string, menu *models.Menu) error
 	Delete(ctx context.Context, id string) error
+	FindAllByLocations(ctx context.Context, locations []models.MenuLocation) ([]*models.Menu, error)
 }

@@ -998,3 +998,69 @@ func collectMenuPageIDs(
 		}
 	}
 }
+
+func (s *MenuService) GetAllPublic(
+	ctx context.Context,
+) (map[models.MenuLocation]*dto.PublicMenuResponse, error) {
+	locations := []models.MenuLocation{
+		models.MenuLocationTop,
+		models.MenuLocationBottom,
+		models.MenuLocationLeft,
+	}
+
+	menus, err := s.menuRepository.FindAllByLocations(
+		ctx,
+		locations,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect page IDs across all active menus.
+	pageIDSet := make(map[string]struct{})
+
+	for _, menu := range menus {
+		if menu.Status {
+			collectMenuPageIDs(menu.Items, pageIDSet)
+		}
+	}
+
+	pageIDs := make([]string, 0, len(pageIDSet))
+	for id := range pageIDSet {
+		pageIDs = append(pageIDs, id)
+	}
+
+	pagesByID, err := s.pageRepository.FindByIDs(ctx, pageIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(
+		map[models.MenuLocation]*dto.PublicMenuResponse,
+		len(locations),
+	)
+
+	for _, menu := range menus {
+		if !menu.Status {
+			continue
+		}
+
+		items, err := s.buildPublicMenuItems(
+			ctx,
+			menu.Items,
+			pagesByID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		result[menu.Location] = &dto.PublicMenuResponse{
+			Name:     menu.Name,
+			Location: menu.Location,
+			Status:   menu.Status,
+			Items:    items,
+		}
+	}
+
+	return result, nil
+}

@@ -367,6 +367,7 @@ func NewRouter(
 
 	// Public menus
 	api.GET("/menus/:location", menuHandler.GetPublicByLocation)
+	api.GET("/menus", menuHandler.GetAllPublic)
 
 	// Admin menus
 	menus := admin.Group("/menus")

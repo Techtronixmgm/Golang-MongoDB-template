@@ -166,3 +166,35 @@ func (r *MenuRepository) Delete(
 
 	return nil
 }
+
+func (r *MenuRepository) FindAllByLocations(
+	ctx context.Context,
+	locations []models.MenuLocation,
+) ([]*models.Menu, error) {
+	cursor, err := r.collection.Find(
+		ctx,
+		bson.M{
+			"location": bson.M{
+				"$in": locations,
+			},
+		},
+		options.Find().SetSort(
+			bson.D{
+				{Key: "location", Value: 1},
+			},
+		),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(ctx)
+
+	menus := make([]*models.Menu, 0)
+
+	if err := cursor.All(ctx, &menus); err != nil {
+		return nil, err
+	}
+
+	return menus, nil
+}

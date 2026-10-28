@@ -651,7 +651,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "// {\n//     \"registration_enabled\" : true,\n//     \"two_factor_enabled\": false,\n//     \"login_with_primary_email\": true,\n//   \"login_with_username\": true,\n//   \"login_with_phone\": false,\n//   \"login_with_alt_email\": false,\n//   \"menu_max_depth\": {\n//     \"top\": 4,\n//     \"left\": 3,\n//     \"bottom\": 2\n//   }\n// }\n\n{\n  \"menu_max_depth\": {\n    \"top\": 3,\n    \"left\": 1,\n    \"bottom\": 2\n  }\n}",
+                  "raw": "{\n    \"registration_enabled\" : true,\n    \"two_factor_enabled\": false,\n    \"login_with_primary_email\": true,\n  \"login_with_username\": true,\n  \"login_with_phone\": false,\n  \"login_with_alt_email\": false,\n  \"menu_max_depth\": {\n    \"top\": 4,\n    \"left\": 3,\n    \"bottom\": 2\n  }\n}\n\n// {\n//   \"menu_max_depth\": {\n//     \"top\": 3,\n//     \"left\": 1,\n//     \"bottom\": 2\n//   }\n// }",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -763,7 +763,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/admin/pages?page=1&limit=20&visibility=public&authorId=6aa2cfce102f1f260ac1d59f",
+                  "raw": "http://localhost:{{port}}/api/v1/admin/pages",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -774,24 +774,41 @@
                     "v1",
                     "admin",
                     "pages"
-                  ],
-                  "query": [
-                    {
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "key": "limit",
-                      "value": "20"
-                    },
-                    {
-                      "key": "visibility",
-                      "value": "public"
-                    },
-                    {
-                      "key": "authorId",
-                      "value": "6aa2cfce102f1f260ac1d59f"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Page by ID",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "\n\n// GET /api/v1/admin/pages\n// GET /api/v1/admin/pages?page=1&limit=20\n// GET /api/v1/admin/pages?visibility=public\n// GET /api/v1/admin/pages?visibility=registered\n// GET /api/v1/admin/pages?authorId=<id>\n\n// http://localhost:{{port}}/api/v1/admin/pages?page=1&limit=20&visibility=public&authorId=6aa2cfce102f1f260ac1d59f",
+                  "options": {
+                    "raw": {
+                      "language": "json"
                     }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/pages/6acb977185bb7c292f8d7592",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "pages",
+                    "6acb977185bb7c292f8d7592"
                   ]
                 }
               },
@@ -1091,7 +1108,7 @@
                   }
                 },
                 "url": {
-                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6abf3cc5a8b0c945d4bb739c",
+                  "raw": "http://localhost:{{port}}/api/v1/admin/menus/6acb935585bb7c292f8d7590",
                   "protocol": "http",
                   "host": [
                     "localhost"
@@ -1102,7 +1119,7 @@
                     "v1",
                     "admin",
                     "menus",
-                    "6abf3cc5a8b0c945d4bb739c"
+                    "6acb935585bb7c292f8d7590"
                   ]
                 }
               },
@@ -1338,6 +1355,34 @@
                 "v1",
                 "menus",
                 "left"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All menus",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "// {\n//   \"title\": \"About Us\",\n//   \"content\": \"About Us page\",\n//   \"visibility\" : \"public\"/\"registered\"\n// }\n\nhttp://localhost:{{port}}/api/v1/menus/bottom\nhttp://localhost:{{port}}/api/v1/menus/top\nhttp://localhost:{{port}}/api/v1/menus/left"
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/menus",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "menus"
               ]
             }
           },
