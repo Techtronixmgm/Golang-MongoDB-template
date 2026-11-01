@@ -350,7 +350,7 @@ func NewRouter(
 		optionalAuthMiddleware,
 		pageHandler.GetBySlug,
 	)
-
+	api.GET("/pages/homepage", pageHandler.GetHomepage)
 	// Admin pages
 	admin := api.Group("/admin")
 	admin.Use(

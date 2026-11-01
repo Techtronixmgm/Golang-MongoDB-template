@@ -374,3 +374,24 @@ func (r *PageRepository) SetHomepage(
 
 	return nil
 }
+
+func (r *PageRepository) FindHomepage(
+	ctx context.Context,
+) (*models.Page, error) {
+	var page models.Page
+
+	err := r.collection.FindOne(
+		ctx,
+		bson.M{"is_homepage": true},
+	).Decode(&page)
+
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, apperrors.ErrPageNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &page, nil
+}

@@ -379,3 +379,27 @@ func (h *PageHandler) UpdateHomepage(c *gin.Context) {
 		"message": message,
 	})
 }
+
+func (h *PageHandler) GetHomepage(c *gin.Context) {
+	page, err := h.pageService.GetHomepage(
+		c.Request.Context(),
+	)
+
+	if err != nil {
+		if errors.Is(err, apperrors.ErrPageNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "homepage not configured",
+			})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "unable to retrieve homepage",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"page": page,
+	})
+}

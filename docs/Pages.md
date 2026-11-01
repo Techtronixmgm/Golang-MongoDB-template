@@ -42,3 +42,16 @@ The `is_homepage` index is a unique partial index. It applies only to documents 
 - A unique partial index on `is_homepage` ensures that at most one page can have `is_homepage: true`.
 - If two different pages are assigned as homepage simultaneously, one operation may fail with a duplicate-key error.
 - Atomic transaction-based handling and automated concurrency testing are deferred.
+
+
+### Optional Authentication Middleware (`optionalAuthMiddleware`)
+
+- Allows requests from both authenticated and unauthenticated users.
+- If a valid access token is provided, the middleware identifies the authenticated user and attaches their information to the request context.
+- If no token is provided, the request continues without authentication.
+- Invalid or expired tokens are rejected according to the middleware's validation rules.
+- Used for public endpoints that may return different content depending on whether the visitor is logged in.
+
+**Usage:** Used by `GET /pages/:slug` because pages can have either `public` or `registered` visibility.
+
+It is not required for `GET /pages/homepage` because the homepage must always be public.

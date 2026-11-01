@@ -282,3 +282,9 @@ func (s *PageService) SetHomepage(
 		isHomepage,
 	)
 }
+
+func (s *PageService) GetHomepage(
+	ctx context.Context,
+) (*models.Page, error) {
+	return s.pageRepository.FindHomepage(ctx)
+}

@@ -877,6 +877,39 @@
                 }
               },
               "response": []
+            },
+            {
+              "name": "Set Homepage by ID",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:{{port}}/api/v1/admin/pages/6aba5b674b9982e2f951c103/homepage",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "{{port}}",
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "pages",
+                    "6aba5b674b9982e2f951c103",
+                    "homepage"
+                  ]
+                }
+              },
+              "response": []
             }
           ]
         },
@@ -1326,6 +1359,35 @@
                 "v1",
                 "pages",
                 "about-uss"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Homepage",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "// {\n//   \"title\": \"About Us\",\n//   \"content\": \"About Us page\",\n//   \"visibility\" : \"public\"/\"registered\"\n// }\n\n{\n  \"title\": \"Website Development\",\n  \"content\": \"With extensive experience in providing effective web and mobility solutions, we help our clients scale-up their business and generate high revenue. Our expert professionals work diligently to customize business solutions for your specific industry niche by conducting thorough market research and competitor analysis.\",\n  \"visibility\" : \"registered\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:{{port}}/api/v1/pages/homepage",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "api",
+                "v1",
+                "pages",
+                "homepage"
               ]
             }
           },
