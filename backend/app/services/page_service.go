@@ -152,6 +152,11 @@ func (s *PageService) Update(
 	}
 
 	if req.Visibility != nil {
+		if page.IsHomepage &&
+			*req.Visibility != models.PageVisibilityPublic {
+			return nil, apperrors.ErrHomepageMustBePublic
+		}
+
 		page.Visibility = *req.Visibility
 	}
 
@@ -264,4 +269,16 @@ func (s *PageService) generateUniqueSlug(
 
 		slug = fmt.Sprintf("%s-%d", baseSlug, i+1)
 	}
+}
+
+func (s *PageService) SetHomepage(
+	ctx context.Context,
+	id string,
+	isHomepage bool,
+) error {
+	return s.pageRepository.SetHomepage(
+		ctx,
+		id,
+		isHomepage,
+	)
 }

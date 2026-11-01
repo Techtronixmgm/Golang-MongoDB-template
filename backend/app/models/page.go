@@ -20,6 +20,7 @@ type Page struct {
 	AuthorID   bson.ObjectID  `bson:"author_id" json:"authorId"`
 	Slug       string         `bson:"slug" json:"slug"`
 	Visibility PageVisibility `bson:"visibility" json:"visibility"`
+	IsHomepage bool           `bson:"is_homepage" json:"isHomepage"`
 
 	CreatedAt time.Time `bson:"created_at" json:"createdAt"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updatedAt"`

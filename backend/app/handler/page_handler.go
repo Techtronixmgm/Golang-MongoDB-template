@@ -229,7 +229,8 @@ func (h *PageHandler) Update(c *gin.Context) {
 
 		case errors.Is(err, apperrors.ErrInvalidPageContent),
 			errors.Is(err, apperrors.ErrInvalidVisibility),
-			errors.Is(err, apperrors.ErrInvalidSlug):
+			errors.Is(err, apperrors.ErrInvalidSlug),
+			errors.Is(err, apperrors.ErrHomepageMustBePublic):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -263,16 +264,23 @@ func (h *PageHandler) Delete(c *gin.Context) {
 		c.Request.Context(),
 		id,
 	); err != nil {
-		if errors.Is(err, apperrors.ErrPageNotFound) {
+		switch {
+		case errors.Is(err, apperrors.ErrPageNotFound):
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "page not found",
 			})
-			return
+
+		case errors.Is(err, apperrors.ErrHomepageCannotBeDeleted):
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "homepage cannot be deleted",
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to delete page",
+			})
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "unable to delete page",
-		})
 		return
 	}
 
@@ -311,5 +319,63 @@ func (h *PageHandler) GetByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"page": page,
+	})
+}
+
+func (h *PageHandler) UpdateHomepage(c *gin.Context) {
+	id := strings.TrimSpace(c.Param("id"))
+
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "page id is required",
+		})
+		return
+	}
+
+	var req dto.UpdatePageHomepageRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid request body",
+		})
+		return
+	}
+
+	err := h.pageService.SetHomepage(
+		c.Request.Context(),
+		id,
+		*req.IsHomepage,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, apperrors.ErrPageNotFound):
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "page not found",
+			})
+
+		case errors.Is(err, apperrors.ErrHomepageRequiresPublicPage),
+			errors.Is(err, apperrors.ErrHomepageMustBePublic):
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "unable to update homepage",
+			})
+		}
+
+		return
+	}
+
+	message := "homepage designation removed"
+
+	if *req.IsHomepage {
+		message = "homepage assigned successfully"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": message,
 	})
 }

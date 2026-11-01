@@ -192,14 +192,35 @@ func (r *PageRepository) Delete(
 
 	result, err := r.collection.DeleteOne(
 		ctx,
-		bson.M{"_id": objectID},
+		bson.M{
+			"_id":         objectID,
+			"is_homepage": bson.M{"$ne": true},
+		},
 	)
-
 	if err != nil {
 		return err
 	}
 
 	if result.DeletedCount == 0 {
+		// Check whether the page exists and is the homepage.
+		var page models.Page
+
+		err := r.collection.FindOne(
+			ctx,
+			bson.M{"_id": objectID},
+		).Decode(&page)
+
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return apperrors.ErrPageNotFound
+		}
+		if err != nil {
+			return err
+		}
+
+		if page.IsHomepage {
+			return apperrors.ErrHomepageCannotBeDeleted
+		}
+
 		return apperrors.ErrPageNotFound
 	}
 
@@ -259,4 +280,97 @@ func (r *PageRepository) FindByIDs(
 	}
 
 	return result, nil
+}
+
+func (r *PageRepository) SetHomepage(
+	ctx context.Context,
+	id string,
+	isHomepage bool,
+) error {
+	objectID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return apperrors.ErrPageNotFound
+	}
+
+	now := time.Now().UTC()
+
+	if !isHomepage {
+		result, err := r.collection.UpdateOne(
+			ctx,
+			bson.M{"_id": objectID},
+			bson.M{
+				"$set": bson.M{
+					"is_homepage": false,
+					"updated_at":  now,
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if result.MatchedCount == 0 {
+			return apperrors.ErrPageNotFound
+		}
+
+		return nil
+	}
+
+	// Verify that the target page is public.
+	var page models.Page
+
+	err = r.collection.FindOne(
+		ctx,
+		bson.M{"_id": objectID},
+	).Decode(&page)
+
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return apperrors.ErrPageNotFound
+		}
+		return err
+	}
+
+	if page.Visibility != models.PageVisibilityPublic {
+		return apperrors.ErrHomepageRequiresPublicPage
+	}
+
+	// Remove the homepage designation from any existing page.
+	_, err = r.collection.UpdateMany(
+		ctx,
+		bson.M{"is_homepage": true},
+		bson.M{
+			"$set": bson.M{
+				"is_homepage": false,
+				"updated_at":  now,
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	// Assign the new homepage.
+	result, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{
+			"_id":        objectID,
+			"visibility": models.PageVisibilityPublic,
+		},
+		bson.M{
+			"$set": bson.M{
+				"is_homepage": true,
+				"updated_at":  now,
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return apperrors.ErrHomepageRequiresPublicPage
+	}
+
+	return nil
 }

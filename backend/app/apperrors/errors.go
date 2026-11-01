@@ -44,11 +44,14 @@ var (
 	ErrMenuItemOrderNotFound = errors.New("menu item order not found")
 
 	// Pages
-	ErrPageNotFound       = errors.New("page not found")
-	ErrInvalidPageContent = errors.New("invalid page")
-	ErrInvalidVisibility  = errors.New("invalid page visibility")
-	ErrInvalidSlug        = errors.New("invalid slug")
-	ErrSlugAlreadyExists  = errors.New("slug already exists")
+	ErrPageNotFound               = errors.New("page not found")
+	ErrInvalidPageContent         = errors.New("invalid page")
+	ErrInvalidVisibility          = errors.New("invalid page visibility")
+	ErrInvalidSlug                = errors.New("invalid slug")
+	ErrSlugAlreadyExists          = errors.New("slug already exists")
+	ErrHomepageRequiresPublicPage = errors.New("only public pages can be set as homepage")
+	ErrHomepageCannotBeDeleted    = errors.New("homepage cannot be deleted")
+	ErrHomepageMustBePublic       = errors.New("homepage visibility must remain public")
 
 	// TOTP/2FA
 	ErrInvalidTOTPCode          = errors.New("invalid TOTP code")

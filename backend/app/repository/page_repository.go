@@ -27,4 +27,5 @@ type PageRepository interface {
 
 	Update(ctx context.Context, id string, page *models.Page) error
 	Delete(ctx context.Context, id string) error
+	SetHomepage(ctx context.Context, id string, isHomepage bool) error
 }

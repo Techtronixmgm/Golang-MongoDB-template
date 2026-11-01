@@ -145,6 +145,16 @@ func EnsurePageIndexes(
 			Options: options.Index().
 				SetName("page_author_created_at"),
 		},
+		{
+			Keys: bson.D{
+				{Key: "is_homepage", Value: 1},
+			},
+			Options: options.Index().
+				SetUnique(true).
+				SetPartialFilterExpression(
+					bson.M{"is_homepage": true},
+				),
+		},
 	}
 
 	_, err := collection.Indexes().CreateMany(ctx, indexes)

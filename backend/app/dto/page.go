@@ -58,3 +58,7 @@ func ToPublicPageResponse(page *models.Page) PublicPageResponse {
 		UpdatedAt:  page.UpdatedAt,
 	}
 }
+
+type UpdatePageHomepageRequest struct {
+	IsHomepage *bool `json:"isHomepage"`
+}

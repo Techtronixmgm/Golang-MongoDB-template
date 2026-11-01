@@ -364,6 +364,7 @@ func NewRouter(
 	admin.GET("/pages/:id", pageHandler.GetByID)
 	admin.PATCH("/pages/:id", pageHandler.Update)
 	admin.DELETE("/pages/:id", pageHandler.Delete)
+	admin.PATCH("/pages/:id/homepage", pageHandler.UpdateHomepage)
 
 	// Public menus
 	api.GET("/menus/:location", menuHandler.GetPublicByLocation)
