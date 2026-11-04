@@ -32,6 +32,7 @@ func AuthMiddleware(
 	accessCookieName string,
 	refreshCookieName string,
 	cookieSecure bool,
+	cookieSameSite http.SameSite,
 	accessTokenExpiryHours int,
 	refreshToken RefreshFunc,
 ) gin.HandlerFunc {
@@ -77,6 +78,7 @@ func AuthMiddleware(
 					time.Duration(accessTokenExpiryHours)*time.Hour,
 				),
 				cookieSecure,
+				cookieSameSite,
 			)
 
 			setAuthCookie(
@@ -85,6 +87,7 @@ func AuthMiddleware(
 				newRefreshToken,
 				refreshExpiry,
 				cookieSecure,
+				cookieSameSite,
 			)
 
 			c.Set("userID", claims.UserID)
@@ -140,6 +143,7 @@ func AuthMiddleware(
 					time.Duration(accessTokenExpiryHours)*time.Hour,
 				),
 				cookieSecure,
+				cookieSameSite,
 			)
 
 			setAuthCookie(
@@ -148,6 +152,7 @@ func AuthMiddleware(
 				newRefreshToken,
 				refreshExpiry,
 				cookieSecure,
+				cookieSameSite,
 			)
 		}
 
@@ -160,10 +165,10 @@ func AuthMiddleware(
 
 func setAuthCookie(
 	c *gin.Context,
-	name string,
-	value string,
+	name, value string,
 	expiresAt time.Time,
 	secure bool,
+	sameSite http.SameSite,
 ) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     name,
@@ -173,6 +178,7 @@ func setAuthCookie(
 		MaxAge:   int(time.Until(expiresAt).Seconds()),
 		HttpOnly: true,
 		Secure:   secure,
+		SameSite: sameSite,
 	})
 }
 
@@ -181,6 +187,7 @@ func OptionalAuthMiddleware(
 	accessCookieName string,
 	refreshCookieName string,
 	cookieSecure bool,
+	cookieSameSite http.SameSite,
 	accessTokenExpiryHours int,
 	refreshToken RefreshFunc,
 ) gin.HandlerFunc {
@@ -225,6 +232,7 @@ func OptionalAuthMiddleware(
 					time.Duration(accessTokenExpiryHours)*time.Hour,
 				),
 				cookieSecure,
+				cookieSameSite,
 			)
 
 			setAuthCookie(
@@ -233,6 +241,7 @@ func OptionalAuthMiddleware(
 				newRefreshToken,
 				refreshExpiry,
 				cookieSecure,
+				cookieSameSite,
 			)
 
 			c.Set("userID", claims.UserID)
@@ -290,14 +299,15 @@ func OptionalAuthMiddleware(
 					time.Duration(accessTokenExpiryHours)*time.Hour,
 				),
 				cookieSecure,
+				cookieSameSite,
 			)
-
 			setAuthCookie(
 				c,
 				refreshCookieName,
 				newRefreshToken,
 				refreshExpiry,
 				cookieSecure,
+				cookieSameSite,
 			)
 		}
 
@@ -305,5 +315,16 @@ func OptionalAuthMiddleware(
 		c.Set("role", claims.Role)
 
 		c.Next()
+	}
+}
+
+func ParseSameSite(value string) http.SameSite {
+	switch value {
+	case "Strict":
+		return http.SameSiteStrictMode
+	case "None":
+		return http.SameSiteNoneMode
+	default:
+		return http.SameSiteLaxMode
 	}
 }

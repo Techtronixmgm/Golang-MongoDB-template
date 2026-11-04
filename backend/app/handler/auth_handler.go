@@ -296,6 +296,7 @@ func (h *AuthHandler) clearAuthCookies(c *gin.Context) {
 			MaxAge:   -1,
 			HttpOnly: true,
 			Secure:   h.config.CookieSecure,
+			SameSite: cookieSameSite(h.config.CookieSameSite),
 		})
 	}
 }

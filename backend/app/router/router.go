@@ -46,7 +46,7 @@ func NewRouter(
 			"Content-Type",
 			"Accept",
 			"Authorization",
-			// "X-Request-ID", // Uncomment these when you want request ID
+			"X-Request-ID", // Uncomment these when you want request ID
 		},
 
 		AllowCredentials: true,
@@ -58,7 +58,7 @@ func NewRouter(
 	// Development: set ENV=development to disable HTTPS redirection.
 	// Production: configure HTTPS before enabling SSLRedirect and HSTS.
 
-	// r.Use(middleware.SecurityMiddleware()) //uncomment to enable security module
+	r.Use(middleware.SecurityMiddleware()) //uncomment to enable security module
 	// run ENV=development air for development environment
 	// run ENV=production air for production environment
 
@@ -66,8 +66,8 @@ func NewRouter(
 	// Uncomment these when you want request ID and structured logging.
 	r.Use(
 		gin.Recovery(),
-		// middleware.RequestID(),
-		// middleware.Logger(),
+		middleware.RequestID(),
+		middleware.Logger(),
 	)
 
 	r.Static("/Uploads", "./Uploads")
@@ -131,6 +131,7 @@ func NewRouter(
 		cfg.AuthAccessCookie,
 		cfg.AuthRefreshCookie,
 		cfg.CookieSecure,
+		auth.ParseSameSite(cfg.CookieSameSite),
 		cfg.JWTExpiryHours,
 		refreshToken,
 	)
@@ -140,6 +141,7 @@ func NewRouter(
 		cfg.AuthAccessCookie,
 		cfg.AuthRefreshCookie,
 		cfg.CookieSecure,
+		auth.ParseSameSite(cfg.CookieSameSite),
 		cfg.JWTExpiryHours,
 		refreshToken,
 	)
