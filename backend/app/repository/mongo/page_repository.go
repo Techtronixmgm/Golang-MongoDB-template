@@ -127,6 +127,9 @@ func (r *PageRepository) List(
 			SetLimit(filter.Limit).
 			SetSort(bson.D{
 				{Key: "created_at", Value: -1},
+			}).
+			SetProjection(bson.M{
+				"css": 0,
 			}),
 	)
 
@@ -163,6 +166,7 @@ func (r *PageRepository) Update(
 			"$set": bson.M{
 				"title":      page.Title,
 				"content":    page.Content,
+				"css":        page.CSS,
 				"slug":       page.Slug,
 				"visibility": page.Visibility,
 				"updated_at": page.UpdatedAt,

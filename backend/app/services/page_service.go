@@ -30,10 +30,18 @@ func (s *PageService) Create(
 	ctx context.Context,
 	page *models.Page,
 ) error {
+	var err error
+
 	page.Title = strings.TrimSpace(page.Title)
 
 	page.Content = sanitizer.Sanitize(page.Content)
 	page.Content = strings.TrimSpace(page.Content)
+
+	css, err := sanitizer.SanitizeCSS(page.CSS)
+	if err != nil {
+		return err
+	}
+	page.CSS = css
 
 	if page.Title == "" || page.Content == "" {
 		return apperrors.ErrInvalidPageContent
@@ -49,7 +57,7 @@ func (s *PageService) Create(
 		return apperrors.ErrInvalidSlug
 	}
 
-	slug, err := s.generateUniqueSlug(ctx, slug, "")
+	slug, err = s.generateUniqueSlug(ctx, slug, "")
 	if err != nil {
 		return err
 	}
@@ -82,7 +90,7 @@ func (s *PageService) GetBySlug(
 func (s *PageService) List(
 	ctx context.Context,
 	opts PageListOptions,
-) ([]*models.Page, int64, int, int, error) {
+) ([]dto.PageListItem, int64, int, int, error) {
 	page := opts.Page
 
 	if page == 0 {
@@ -129,7 +137,13 @@ func (s *PageService) List(
 		)
 	}
 
-	return pages, total, page, totalPages, nil
+	pageItems := make([]dto.PageListItem, 0, len(pages))
+
+	for _, page := range pages {
+		pageItems = append(pageItems, dto.ToPageListItem(page))
+	}
+
+	return pageItems, total, page, totalPages, nil
 }
 
 func (s *PageService) Update(
@@ -149,6 +163,15 @@ func (s *PageService) Update(
 	if req.Content != nil {
 		page.Content = sanitizer.Sanitize(*req.Content)
 		page.Content = strings.TrimSpace(page.Content)
+	}
+
+	if req.CSS != nil {
+		css, err := sanitizer.SanitizeCSS(*req.CSS)
+		if err != nil {
+			return nil, err
+		}
+
+		page.CSS = css
 	}
 
 	if req.Visibility != nil {

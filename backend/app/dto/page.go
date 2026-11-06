@@ -9,6 +9,7 @@ type CreatePageRequest struct {
 	Title      string                `json:"title" binding:"required"`
 	Content    string                `json:"content" binding:"required"`
 	Visibility models.PageVisibility `json:"visibility" binding:"required"`
+	CSS        string                `json:"css"`
 }
 
 type UpdatePageRequest struct {
@@ -16,6 +17,7 @@ type UpdatePageRequest struct {
 	Content    *string                `json:"content"`
 	Slug       *string                `json:"slug"`
 	Visibility *models.PageVisibility `json:"visibility"`
+	CSS        *string                `json:"css"`
 }
 
 type ListAdminPagesQuery struct {
@@ -26,7 +28,7 @@ type ListAdminPagesQuery struct {
 }
 
 type PageListResponse struct {
-	Pages      []*models.Page `json:"pages"`
+	Pages      []PageListItem `json:"pages"`
 	Pagination PagePagination `json:"pagination"`
 }
 
@@ -61,4 +63,30 @@ func ToPublicPageResponse(page *models.Page) PublicPageResponse {
 
 type UpdatePageHomepageRequest struct {
 	IsHomepage *bool `json:"isHomepage"`
+}
+
+type PageListItem struct {
+	ID         string                `json:"id"`
+	Title      string                `json:"title"`
+	Content    string                `json:"content"`
+	AuthorID   string                `json:"authorId"`
+	Slug       string                `json:"slug"`
+	Visibility models.PageVisibility `json:"visibility"`
+	IsHomepage bool                  `json:"isHomepage"`
+	CreatedAt  time.Time             `json:"createdAt"`
+	UpdatedAt  time.Time             `json:"updatedAt"`
+}
+
+func ToPageListItem(page *models.Page) PageListItem {
+	return PageListItem{
+		ID:         page.ID.Hex(),
+		Title:      page.Title,
+		Content:    page.Content,
+		AuthorID:   page.AuthorID.Hex(),
+		Slug:       page.Slug,
+		Visibility: page.Visibility,
+		IsHomepage: page.IsHomepage,
+		CreatedAt:  page.CreatedAt,
+		UpdatedAt:  page.UpdatedAt,
+	}
 }

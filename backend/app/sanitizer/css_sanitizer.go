@@ -1,7 +1,7 @@
 package sanitizer
 
 import (
-	"errors"
+	"basic-app/apperrors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -12,8 +12,6 @@ import (
 )
 
 var (
-	ErrInvalidCSS = errors.New("invalid or unsafe CSS")
-
 	unsafeCSSPattern = regexp.MustCompile(
 		`(?i)(url\s*\(|expression\s*\(|javascript\s*:|vbscript\s*:|</?\s*(style|script)\b|@import\b)`,
 	)
@@ -39,7 +37,7 @@ func SanitizeCSS(raw string) (string, error) {
 
 	stylesheet, err := cssparser.ParseStylesheet(raw)
 	if err != nil {
-		return "", fmt.Errorf("%w: malformed stylesheet", ErrInvalidCSS)
+		return "", fmt.Errorf("%w: malformed stylesheet", apperrors.ErrInvalidCSS)
 	}
 
 	for _, rule := range stylesheet.Rules {
@@ -53,14 +51,14 @@ func SanitizeCSS(raw string) (string, error) {
 
 func validateCSSRule(rule *cssparser.CssRule) error {
 	if rule == nil {
-		return ErrInvalidCSS
+		return apperrors.ErrInvalidCSS
 	}
 
 	switch rule.Kind {
 	case cssparser.QualifiedRule:
 		for _, selector := range rule.Selectors {
 			if containsUnsafeCSS(selector) {
-				return ErrInvalidCSS
+				return apperrors.ErrInvalidCSS
 			}
 		}
 
@@ -76,13 +74,13 @@ func validateCSSRule(rule *cssparser.CssRule) error {
 		if !allowedCSSAtRules[name] {
 			return fmt.Errorf(
 				"%w: unsupported at-rule %s",
-				ErrInvalidCSS,
+				apperrors.ErrInvalidCSS,
 				name,
 			)
 		}
 
 		if containsUnsafeCSS(rule.Prelude) {
-			return ErrInvalidCSS
+			return apperrors.ErrInvalidCSS
 		}
 
 		for _, declaration := range rule.Declarations {
@@ -98,7 +96,7 @@ func validateCSSRule(rule *cssparser.CssRule) error {
 		}
 
 	default:
-		return ErrInvalidCSS
+		return apperrors.ErrInvalidCSS
 	}
 
 	return nil
@@ -108,7 +106,7 @@ func validateCSSDeclaration(
 	declaration *cssparser.Declaration,
 ) error {
 	if declaration == nil {
-		return ErrInvalidCSS
+		return apperrors.ErrInvalidCSS
 	}
 
 	property := strings.ToLower(
@@ -117,12 +115,12 @@ func validateCSSDeclaration(
 
 	switch property {
 	case "behavior", "-moz-binding":
-		return ErrInvalidCSS
+		return apperrors.ErrInvalidCSS
 	}
 
 	if containsUnsafeCSS(property) ||
 		containsUnsafeCSS(declaration.Value) {
-		return ErrInvalidCSS
+		return apperrors.ErrInvalidCSS
 	}
 
 	return nil

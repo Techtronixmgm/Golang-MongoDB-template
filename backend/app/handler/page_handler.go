@@ -56,6 +56,7 @@ func (h *PageHandler) Create(c *gin.Context) {
 	page := &models.Page{
 		Title:      req.Title,
 		Content:    req.Content,
+		CSS:        req.CSS,
 		AuthorID:   authorID,
 		Visibility: req.Visibility,
 	}
@@ -67,7 +68,8 @@ func (h *PageHandler) Create(c *gin.Context) {
 		switch {
 		case errors.Is(err, apperrors.ErrInvalidPageContent),
 			errors.Is(err, apperrors.ErrInvalidVisibility),
-			errors.Is(err, apperrors.ErrInvalidSlug):
+			errors.Is(err, apperrors.ErrInvalidSlug),
+			errors.Is(err, apperrors.ErrInvalidCSS):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -230,7 +232,8 @@ func (h *PageHandler) Update(c *gin.Context) {
 		case errors.Is(err, apperrors.ErrInvalidPageContent),
 			errors.Is(err, apperrors.ErrInvalidVisibility),
 			errors.Is(err, apperrors.ErrInvalidSlug),
-			errors.Is(err, apperrors.ErrHomepageMustBePublic):
+			errors.Is(err, apperrors.ErrHomepageMustBePublic),
+			errors.Is(err, apperrors.ErrInvalidCSS):
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})

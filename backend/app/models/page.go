@@ -24,4 +24,5 @@ type Page struct {
 
 	CreatedAt time.Time `bson:"created_at" json:"createdAt"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updatedAt"`
+	CSS       string    `bson:"css" json:"css"`
 }

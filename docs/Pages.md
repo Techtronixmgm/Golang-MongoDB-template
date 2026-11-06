@@ -12,6 +12,7 @@ User can create, update and delete pages.
 - **Visibility:** Controls access to the page (`public` or `registered`).
 - **CreatedAt:** Date and time the page was created.
 - **UpdatedAt:** Date and time the page was last updated.
+- **CSS:** Custom CSS field for the page
 
 ### Page Indexes
 

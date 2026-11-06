@@ -52,6 +52,7 @@ var (
 	ErrHomepageRequiresPublicPage = errors.New("only public pages can be set as homepage")
 	ErrHomepageCannotBeDeleted    = errors.New("homepage cannot be deleted")
 	ErrHomepageMustBePublic       = errors.New("homepage visibility must remain public")
+	ErrInvalidCSS                 = errors.New("invalid or unsafe CSS")
 
 	// TOTP/2FA
 	ErrInvalidTOTPCode          = errors.New("invalid TOTP code")
