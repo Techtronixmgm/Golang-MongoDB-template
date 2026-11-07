@@ -9,6 +9,7 @@ import (
 type PageListFilter struct {
 	Visibility *models.PageVisibility
 	AuthorID   string
+	Search     string
 	Skip       int64
 	Limit      int64
 }

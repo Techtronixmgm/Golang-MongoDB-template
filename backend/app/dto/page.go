@@ -25,6 +25,7 @@ type ListAdminPagesQuery struct {
 	Limit      int    `form:"limit"`
 	Visibility string `form:"visibility"`
 	AuthorID   string `form:"authorId"`
+	Search     string `form:"search"`
 }
 
 type PageListResponse struct {

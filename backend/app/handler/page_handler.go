@@ -162,6 +162,7 @@ func (h *PageHandler) List(c *gin.Context) {
 			Limit:      query.Limit,
 			Visibility: visibility,
 			AuthorID:   query.AuthorID,
+			Search:     query.Search,
 		},
 	)
 

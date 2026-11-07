@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
+	"regexp"
 	"time"
 
 	"basic-app/apperrors"
@@ -114,11 +115,27 @@ func (r *PageRepository) List(
 		query["author_id"] = authorID
 	}
 
+	// Text search
+	if filter.Search != "" {
+		search := bson.M{
+			"$regex":   regexp.QuoteMeta(filter.Search),
+			"$options": "i",
+		}
+
+		query["$or"] = bson.A{
+			bson.M{"title": search},
+			bson.M{"slug": search},
+			// bson.M{"content": search},
+		}
+	}
+
+	// Count matching documents
 	total, err := r.collection.CountDocuments(ctx, query)
 	if err != nil {
 		return nil, 0, err
 	}
 
+	// Fetch matching documents
 	cursor, err := r.collection.Find(
 		ctx,
 		query,

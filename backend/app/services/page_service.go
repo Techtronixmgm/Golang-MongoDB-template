@@ -121,6 +121,7 @@ func (s *PageService) List(
 		repository.PageListFilter{
 			Visibility: opts.Visibility,
 			AuthorID:   strings.TrimSpace(opts.AuthorID),
+			Search:     strings.TrimSpace(opts.Search),
 			Skip:       int64(page-1) * int64(limit),
 			Limit:      int64(limit),
 		},
@@ -262,6 +263,7 @@ type PageListOptions struct {
 	Limit      int
 	Visibility *models.PageVisibility
 	AuthorID   string
+	Search     string
 }
 
 func (s *PageService) generateUniqueSlug(
