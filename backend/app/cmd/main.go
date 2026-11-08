@@ -52,7 +52,7 @@ func main() {
 	}
 
 	if err := mongorepo.EnsurePageIndexes(indexCtx, db); err != nil {
-		log.Fatal("failed to ensure page indexes:", err)
+		log.Printf("Failed to create page indexes: %v", err)
 	}
 
 	refreshTokenRepository := mongorepo.NewRefreshTokenRepository(db)

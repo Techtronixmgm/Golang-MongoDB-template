@@ -14,7 +14,7 @@ import (
 func Connect(cfg config.Config) (*mongo.Client, *mongo.Database, error) {
 
 	//prevents your app freeze in startup
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	clientOpts := options.Client().ApplyURI(cfg.MongoUri)
